@@ -1,0 +1,148 @@
+@model IEnumerable<GymManagement.ViewModels.StaffTodayAttendanceRow>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+@{
+    var todayBoard = Model?.ToList() ?? new List<GymManagement.ViewModels.StaffTodayAttendanceRow>();
+    var todayPresent = todayBoard.Count(x => x.DayStatus == "Present");
+    var todayAbsent = todayBoard.Count(x => x.DayStatus == "Absent");
+    var todayNotMarked = todayBoard.Count(x => x.DayStatus == "NotMarked");
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var showManageLink = ViewData["ShowManageLink"] as bool? ?? false;
+    var boardDate = ViewData["BoardDate"] as DateTime? ?? DateTime.Today;
+    var allowQuickActions = ViewData["AllowQuickActions"] as bool? ?? true;
+    var isToday = boardDate.Date == DateTime.Today;
+}
+
+<div class="card shadow border-0 mb-0 dash-staff-board">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">
+            <i class="fas fa-clipboard-user me-2"></i>@(isToday ? "Today's Staff Board" : "Staff Board") — @boardDate.ToString("dd MMM yyyy")
+        </h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-success">@todayPresent In</span>
+            <span class="badge bg-danger">@todayAbsent Absent</span>
+            <span class="badge bg-secondary">@todayNotMarked Not Marked</span>
+            @if (showManageLink)
+            {
+                <a href="/StaffAttendance/Index" class="btn btn-sm btn-outline-light ms-2">Full Page</a>
+            }
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Staff</th>
+                        <th>Status</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Duration</th>
+                        <th width="280">Quick Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (todayBoard.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-users-slash fa-2x mb-2 d-block"></i>
+                                No active staff found.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in todayBoard)
+                        {
+                            <tr>
+                                <td><strong>@row.StaffName</strong><br /><small class="text-muted">@row.Designation</small></td>
+                                <td><span class="badge @row.StatusBadgeClass">@row.StatusLabel</span></td>
+                                <td>@(row.FormattedCheckIn ?? "—")</td>
+                                <td>@(row.FormattedCheckOut ?? "—")</td>
+                                <td>@(row.WorkDuration ?? "—")</td>
+                                <td>
+                                    @if (allowQuickActions && GymManagement.Helpers.PermissionHelper.CanAdd(Context, PermissionRepo, "StaffAttendance"))
+                                    {
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @if (row.DayStatus == "NotMarked" || row.DayStatus == "Absent" || row.DayStatus == "Leave" || row.DayStatus == "HalfDay")
+                                            {
+                                                <form method="post" asp-controller="StaffAttendance" asp-action="QuickCheckIn" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="staffId" value="@row.StaffId" />
+                                                    @if (!string.IsNullOrEmpty(returnUrl))
+                                                    {
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                    }
+                                                    <button type="submit" class="btn btn-success btn-sm" title="Check In">
+                                                        <i class="fas fa-sign-in-alt"></i> In
+                                                    </button>
+                                                </form>
+                                            }
+                                            @if (row.DayStatus == "Present" && row.CheckInTime != null && row.CheckOutTime == null)
+                                            {
+                                                <form method="post" asp-controller="StaffAttendance" asp-action="QuickCheckOut" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="staffId" value="@row.StaffId" />
+                                                    @if (!string.IsNullOrEmpty(returnUrl))
+                                                    {
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                    }
+                                                    <button type="submit" class="btn btn-warning btn-sm" title="Check Out">
+                                                        <i class="fas fa-sign-out-alt"></i> Out
+                                                    </button>
+                                                </form>
+                                            }
+                                            @if (row.DayStatus == "NotMarked" || (row.DayStatus == "Present" && row.CheckInTime == null))
+                                            {
+                                                <form method="post" asp-controller="StaffAttendance" asp-action="MarkStatus" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="staffId" value="@row.StaffId" />
+                                                    <input type="hidden" name="status" value="Absent" />
+                                                    @if (!string.IsNullOrEmpty(returnUrl))
+                                                    {
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                    }
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Mark Absent">
+                                                        <i class="fas fa-user-times"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="post" asp-controller="StaffAttendance" asp-action="MarkStatus" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="staffId" value="@row.StaffId" />
+                                                    <input type="hidden" name="status" value="Leave" />
+                                                    @if (!string.IsNullOrEmpty(returnUrl))
+                                                    {
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                    }
+                                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Mark Leave">
+                                                        <i class="fas fa-plane-departure"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="post" asp-controller="StaffAttendance" asp-action="MarkStatus" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="staffId" value="@row.StaffId" />
+                                                    <input type="hidden" name="status" value="HalfDay" />
+                                                    @if (!string.IsNullOrEmpty(returnUrl))
+                                                    {
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                    }
+                                                    <button type="submit" class="btn btn-outline-info btn-sm" title="Mark Half Day">
+                                                        <i class="fas fa-adjust"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                    else if (!allowQuickActions)
+                                    {
+                                        <span class="text-muted small">View only</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

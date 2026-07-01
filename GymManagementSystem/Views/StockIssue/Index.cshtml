@@ -1,0 +1,358 @@
+@model List<GymManagement.Models.StockIssue>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Stock Issue";
+
+    int totalIssues = Model.Count;
+    int totalQty = Model.Sum(x => x.Quantity);
+    decimal totalAmount = Model.Sum(x => x.Amount ?? 0);
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Stock Issue</h2>
+            <p class="mb-0">Issue products to members or staff</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "StockIssue" })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "StockIssue"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#issueForm">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Issue
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Issues</h6>
+                <h2>@totalIssues</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Total Quantity</h6>
+                <h2>@totalQty</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>Total Amount</h6>
+                <h2>@totalAmount.ToString("C0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-white">
+            <div class="card-body">
+                <h6>Unique Products</h6>
+                <h2>@Model.Select(x => x.ProductId).Distinct().Count()</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="issueForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Stock Issue</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save" id="issueFormElement">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Product</label>
+                        <select name="ProductId" class="form-select" required id="productSelect">
+                            <option value="">Select Product</option>
+                            @foreach (var product in ViewBag.Products)
+                            {
+                                <option value="@product.ProductId" data-price="@product.UnitPrice" data-stock="@product.CurrentStock">@product.ProductName (@product.Category)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Member (Optional)</label>
+                        <select name="MemberId" class="form-select" id="memberSelect">
+                            <option value="">Select Member</option>
+                            @foreach (var member in ViewBag.Members)
+                            {
+                                <option value="@member.MemberId" data-name="@member.MemberName">@member.MemberCode - @member.MemberName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Issued To</label>
+                        <input type="text" name="IssuedTo" class="form-control" required id="issuedToInput" placeholder="Name of recipient" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Issue Date</label>
+                        <input type="date" name="IssueDate" class="form-control" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label>Quantity</label>
+                        <input type="number" min="1" name="Quantity" class="form-control" required id="quantityInput" value="1" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Amount (₹)</label>
+                        <input type="number" step="0.01" min="0" name="Amount" class="form-control" id="amountInput" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Payment Mode</label>
+                        <select name="PaymentMode" class="form-select">
+                            <option value="">None</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Available Stock</label>
+                        <input type="text" class="form-control" id="currentStockDisplay" readonly />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" placeholder="Optional remarks" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Issue
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search product/member/issued to..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="productId" class="form-select">
+                        <option value="">All Products</option>
+                        @foreach (var product in ViewBag.Products)
+                        {
+                            if (ViewBag.ProductId != null && ViewBag.ProductId.ToString() == product.ProductId.ToString())
+                            {
+                                <option value="@product.ProductId" selected>@product.ProductName</option>
+                            }
+                            else
+                            {
+                                <option value="@product.ProductId">@product.ProductName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="memberId" class="form-select">
+                        <option value="">All Members</option>
+                        @foreach (var member in ViewBag.Members)
+                        {
+                            if (ViewBag.MemberId != null && ViewBag.MemberId.ToString() == member.MemberId.ToString())
+                            {
+                                <option value="@member.MemberId" selected>@member.MemberName</option>
+                            }
+                            else
+                            {
+                                <option value="@member.MemberId">@member.MemberName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>From Date</label>
+                    <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label>To Date</label>
+                    <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+                </div>
+                <div class="col-md-1">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Issue List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Issued To</th>
+                        <th>Member</th>
+                        <th>Date</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Remarks</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.ProductName</strong><br />
+                                    <small class="text-muted">@item.Category</small>
+                                </td>
+                                <td>@item.IssuedTo</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.MemberName))
+                                    {
+                                        <span>@item.MemberCode - @item.MemberName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>@item.IssueDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="badge bg-primary">@item.Quantity</span></td>
+                                <td><strong>@(item.Amount?.ToString("C0") ?? "—")</strong></td>
+                                <td>@item.PaymentMode</td>
+                                <td>@item.Remarks</td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "StockIssue"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadIssue(@item.IssueId)">
+                                            Edit
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "StockIssue"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.IssueId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete this issue? Stock will be restored.')">
+                                            Delete
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No Issues Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editIssueModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Stock Issue</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editIssueContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('quantityInput').addEventListener('input', calculateAmount);
+    document.getElementById('productSelect').addEventListener('change', onProductChange);
+    document.getElementById('memberSelect').addEventListener('change', onMemberChange);
+
+    function onProductChange() {
+        var selectedOption = this.options[this.selectedIndex];
+        var price = selectedOption.getAttribute('data-price');
+        var stock = selectedOption.getAttribute('data-stock');
+        if (stock) {
+            document.getElementById('currentStockDisplay').value = stock;
+        }
+        calculateAmount();
+    }
+
+    function onMemberChange() {
+        var selectedOption = this.options[this.selectedIndex];
+        var name = selectedOption.getAttribute('data-name');
+        if (name) {
+            document.getElementById('issuedToInput').value = name;
+        }
+    }
+
+    function calculateAmount() {
+        var selectedOption = document.getElementById('productSelect').options[document.getElementById('productSelect').selectedIndex];
+        var price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        var qty = parseFloat(document.getElementById('quantityInput').value) || 0;
+        if (price > 0 && qty > 0) {
+            document.getElementById('amountInput').value = (qty * price).toFixed(2);
+        }
+    }
+
+    function loadIssue(id) {
+        fetch('/StockIssue/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editIssueContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editIssueModal')).show();
+        });
+    }
+</script>

@@ -1,0 +1,142 @@
+@model GymManagement.ViewModels.ProfitLossReportViewModel
+
+@{
+    ViewData["Title"] = "Profit / Loss Report";
+    var profitClass = Model.NetProfit >= 0 ? "bg-success" : "bg-danger";
+}
+
+<partial name="_ReportStyles" />
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Profit / Loss Report</h2>
+            <p class="mb-0">Income vs expenses and salaries</p>
+        </div>
+        @await Component.InvokeAsync("ExportImport", new { module = "ReportProfitLoss", exportAction = "ExportProfitLoss" })
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Total Income</h6>
+                <h2>₹ @Model.TotalIncome.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Total Expenses</h6>
+                <h2>₹ @Model.TotalExpenses.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Salaries Paid</h6>
+                <h2>₹ @Model.TotalSalaries.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card @profitClass text-white">
+            <div class="card-body">
+                <h6>Net @(Model.NetProfit >= 0 ? "Profit" : "Loss")</h6>
+                <h2>₹ @Math.Abs(Model.NetProfit).ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">From Date</label>
+                <input type="date" name="fromDate" class="form-control"
+                       value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">To Date</label>
+                <input type="date" name="toDate" class="form-control"
+                       value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card table-card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Income by Payment Mode</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.IncomeByMode.Any())
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No income data</td>
+                                </tr>
+                            }
+                            @foreach (var row in Model.IncomeByMode)
+                            {
+                                <tr>
+                                    <td>@row.Label</td>
+                                    <td class="text-end">₹ @row.Amount.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card table-card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Expenses by Head</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Expense Head</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.ExpenseBreakdown.Any())
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No expense data</td>
+                                </tr>
+                            }
+                            @foreach (var row in Model.ExpenseBreakdown)
+                            {
+                                <tr>
+                                    <td>@row.Label</td>
+                                    <td class="text-end">₹ @row.Amount.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

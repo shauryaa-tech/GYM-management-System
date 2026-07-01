@@ -1,0 +1,210 @@
+@model GymManagement.ViewModels.MemberAttendanceHistoryViewModel
+@{
+    ViewData["Title"] = "Member Attendance History";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .month-card {
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+    .month-card .card-header {
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .stat-pill {
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        height: 100%;
+    }
+    .member-select-card {
+        border-radius: 18px;
+        border: 1px solid var(--cm-border, #e2e8f0);
+        box-shadow: var(--cm-shadow-sm, 0 4px 14px rgba(0,0,0,.06));
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fas fa-user-clock me-2"></i>Member Attendance History</h2>
+            <p class="mb-0 opacity-75">Kisi bhi member ko select karein — current aur previous month ki poori details</p>
+        </div>
+        <a asp-action="Index" class="btn btn-light">
+            <i class="fas fa-arrow-left me-2"></i>Daily Attendance
+        </a>
+    </div>
+</div>
+
+<div class="card member-select-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-8">
+                <label class="form-label fw-semibold">Select Member</label>
+                <select name="memberId" class="form-select form-select-lg" onchange="this.form.submit()">
+                    <option value="">-- Member choose karein --</option>
+                    @foreach (var m in Model.Members)
+                    {
+                        if (Model.SelectedMemberId == m.MemberId)
+                        {
+                            <option value="@m.MemberId" selected>
+                                @m.Display @(string.IsNullOrEmpty(m.MobileNo) ? "" : $"({m.MobileNo})")
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@m.MemberId">
+                                @m.Display @(string.IsNullOrEmpty(m.MobileNo) ? "" : $"({m.MobileNo})")
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-lg-4">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-search me-2"></i>View History
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.SelectedMember != null)
+{
+    <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #2563eb !important;">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">@Model.SelectedMember.MemberName</h4>
+                    <div class="text-muted">
+                        <span class="me-3"><i class="fas fa-id-card me-1"></i>@Model.SelectedMember.MemberCode</span>
+                        @if (!string.IsNullOrEmpty(Model.SelectedMember.MobileNo))
+                        {
+                            <span class="me-3"><i class="fas fa-phone me-1"></i>@Model.SelectedMember.MobileNo</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.SelectedMember.PlanName))
+                        {
+                            <span><i class="fas fa-dumbbell me-1"></i>@Model.SelectedMember.PlanName</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var block in new[] { Model.CurrentMonth, Model.PreviousMonth })
+        {
+            <div class="col-lg-6">
+                <div class="card month-card h-100">
+                    <div class="card-header py-3">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>@block.MonthLabel
+                            @if (block.Month == DateTime.Today.Month && block.Year == DateTime.Today.Year)
+                            {
+                                <span class="badge bg-primary ms-2">Current Month</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary ms-2">Previous Month</span>
+                            }
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-4">
+                                <div class="stat-pill text-center">
+                                    <div class="text-muted small">Visit Days</div>
+                                    <div class="fw-bold text-success fs-4">@block.TotalVisitDays</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-pill text-center">
+                                    <div class="text-muted small">Full Sessions</div>
+                                    <div class="fw-bold text-primary fs-4">@block.CompletedSessions</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-pill text-center">
+                                    <div class="text-muted small">Total Gym Time</div>
+                                    <div class="fw-bold text-info fs-5">@block.TotalGymTime</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Duration</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (block.Days.Count > 0)
+                                    {
+                                        @foreach (var day in block.Days)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@day.AttendanceDate.ToString("dd MMM yyyy")</strong><br />
+                                                    <small class="text-muted">@day.AttendanceDate.ToString("dddd")</small>
+                                                </td>
+                                                <td>@(day.FormattedCheckIn ?? "—")</td>
+                                                <td>@(day.FormattedCheckOut ?? "—")</td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(day.Duration))
+                                                    {
+                                                        <span class="badge bg-info">@day.Duration</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td>@(string.IsNullOrWhiteSpace(day.Remarks) ? "—" : day.Remarks)</td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <i class="fas fa-calendar-xmark fa-2x mb-2 d-block"></i>
+                                                Is month me koi attendance record nahi mila
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+            <i class="fas fa-users fa-3x mb-3 d-block opacity-50"></i>
+            <h5>Pehle upar se member select karein</h5>
+            <p class="mb-0">Current month aur previous month ki saari attendance details yahan dikhegi</p>
+        </div>
+    </div>
+}

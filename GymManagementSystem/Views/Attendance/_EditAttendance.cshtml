@@ -1,0 +1,93 @@
+﻿@model GymManagement.Models.Attendance
+
+<form method="post"
+      asp-action="Update">
+
+    <input type="hidden"
+           asp-for="AttendanceId" />
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Member
+            </label>
+
+            <select asp-for="MemberId"
+                    class="form-select">
+
+                @foreach (var member in ViewBag.Members)
+                {
+                    <option value="@member.MemberId">
+                        @member.MemberCode - @member.MemberName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Attendance Date
+            </label>
+
+            <input asp-for="AttendanceDate"
+                   type="date"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Check In Time
+            </label>
+
+            <input asp-for="CheckInTime"
+                   type="time"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Check Out Time
+            </label>
+
+            <input asp-for="CheckOutTime"
+                   type="time"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-12 mb-3">
+
+            <label class="form-label">
+                Remarks
+            </label>
+
+            <input asp-for="Remarks"
+                   class="form-control" />
+
+        </div>
+
+    </div>
+
+    <div class="text-end">
+
+        <button type="submit"
+                class="btn btn-success">
+
+            <i class="fas fa-save me-2"></i>
+
+            Update Attendance
+
+        </button>
+
+    </div>
+
+</form>

@@ -1,0 +1,37 @@
+@model GymManagement.ViewModels.PaymentGatewayFormViewModel
+@{
+    ViewData["Title"] = "Add Payment Gateway";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .form-control, .form-select, .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <h2 class="fw-bold mb-1">Add Payment Gateway</h2>
+    <p class="mb-0">Gateway choose karein, Key ID aur Key Secret daalein — baaki sab automatic set ho jayega</p>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-body">
+        <form asp-action="Create" method="post" id="paymentGatewayForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <partial name="_Form" model="Model" />
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="~/js/payment-gateway.js" asp-append-version="true"></script>
+}

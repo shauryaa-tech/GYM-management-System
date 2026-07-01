@@ -1,0 +1,105 @@
+@model GymManagement.Models.SalaryRuleMaster
+
+@{
+    var selectedOff = (Model.WeeklyOffDays ?? "Sunday")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+}
+
+<form method="post" asp-action="Update">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="RuleId" />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Rule Name</label>
+            <input asp-for="RuleName" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Working Days / Month</label>
+            <input asp-for="WorkingDaysPerMonth" type="number" min="1" max="31" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Half Day Factor</label>
+            <input asp-for="HalfDayDeductionFactor" type="number" step="0.01" min="0" max="1" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Shift Start</label>
+            <input asp-for="ShiftStartTime" type="time" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Shift Over (End)</label>
+            <input asp-for="ShiftEndTime" type="time" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Late Grace (minutes)</label>
+            <input asp-for="LateGraceMinutes" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Early Leave Grace (min)</label>
+            <input asp-for="EarlyLeaveGraceMinutes" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check form-switch">
+                <input asp-for="IsDefault" class="form-check-input" />
+                <label class="form-check-label" asp-for="IsDefault">Default rule</label>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check form-switch">
+                <input asp-for="AbsentDeductionPerDay" class="form-check-input" />
+                <label class="form-check-label">Absent par per-day deduction</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-switch">
+                <input asp-for="LeaveIsPaid" class="form-check-input" />
+                <label class="form-check-label">Leave paid</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-switch">
+                <input asp-for="LateCountsAsHalfDay" class="form-check-input" />
+                <label class="form-check-label">Late → half-day penalty</label>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-switch">
+                <input asp-for="EarlyLeaveCountsAsHalfDay" class="form-check-input" />
+                <label class="form-check-label">Early shift-over → half-day penalty</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card bg-light border-0 p-3">
+                <div class="form-check form-switch mb-2">
+                    <input asp-for="EnableSandwichRule" class="form-check-input" />
+                    <label class="form-check-label fw-semibold">Enable Sandwich Rule</label>
+                </div>
+                <label class="form-label small mb-1">Weekly Off Days</label>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var dow in Enum.GetValues<DayOfWeek>())
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="WeeklyOffDayOptions" value="@dow" id="edit_off_@dow" @(selectedOff.Contains(dow.ToString()) ? "checked" : null) />
+                            <label class="form-check-label" for="edit_off_@dow">@dow</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+        </div>
+    </div>
+    <div class="text-end mt-3">
+        <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>Update Rule</button>
+    </div>
+</form>

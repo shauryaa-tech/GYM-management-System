@@ -1,0 +1,14 @@
+﻿# Cursor indexing — skip generated / IDE / temp folders
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.idea/
+.build-check/
+_build_check/
+_build_check*/
+publish/
+out/
+[Tt]est[Rr]esult*/
+**/[Pp]ackages/

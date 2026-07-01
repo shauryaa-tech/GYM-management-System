@@ -1,0 +1,319 @@
+@model List<GymManagement.Models.Expense>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Expenses";
+
+    int totalExpenses = Model.Count;
+    decimal totalAmount = Model.Sum(x => x.Amount);
+    int cashCount = Model.Count(x => x.PaymentMode == "Cash");
+    int upiCount = Model.Count(x => x.PaymentMode == "UPI");
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Expenses</h2>
+            <p class="mb-0">Track and manage gym expenses</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Expenses" })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "Expenses"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#expenseForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Add Expense
+
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Records</h6>
+                <h2>@totalExpenses</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Total Amount</h6>
+                <h2>₹ @totalAmount.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Cash Payments</h6>
+                <h2>@cashCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>UPI Payments</h6>
+                <h2>@upiCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="expenseForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Expense</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Expense Head</label>
+                        <select name="ExpenseHeadId" class="form-select" required>
+                            <option value="">Select Category</option>
+                            @foreach (var head in ViewBag.ExpenseHeads)
+                            {
+                                <option value="@head.ExpenseHeadId">@head.HeadName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Amount (₹)</label>
+                        <input type="number" step="0.01" min="0" name="Amount" class="form-control" required />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Expense Date</label>
+                        <input type="date" name="ExpenseDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Payment Mode</label>
+                        <select name="PaymentMode" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Paid To</label>
+                        <input type="text" name="PaidTo" class="form-control" placeholder="Vendor / Person name" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Description</label>
+                        <input type="text" name="Description" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Expense
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Head, Paid To..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="expenseHeadId" class="form-select">
+                        <option value="">All Categories</option>
+                        @foreach (var head in ViewBag.ExpenseHeads)
+                        {
+                            if (ViewBag.ExpenseHeadId != null && ViewBag.ExpenseHeadId.ToString() == head.ExpenseHeadId.ToString())
+                            {
+                                <option value="@head.ExpenseHeadId" selected>@head.HeadName</option>
+                            }
+                            else
+                            {
+                                <option value="@head.ExpenseHeadId">@head.HeadName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="paymentMode" class="form-select">
+                        <option value="">All Modes</option>
+                        @{
+                            var modes = new[] { "Cash", "Card", "UPI", "Bank" };
+                            foreach (var mode in modes)
+                            {
+                                if (ViewBag.PaymentMode == mode)
+                                {
+                                    <option value="@mode" selected>@mode</option>
+                                }
+                                else
+                                {
+                                    <option value="@mode">@mode</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" placeholder="From Date" />
+                </div>
+                <div class="col-md-3">
+                    <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" placeholder="To Date" />
+                </div>
+                <div class="col-md-12 mt-2">
+                    <button class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Expense List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Paid To</th>
+                        <th>Payment Mode</th>
+                        <th>Description</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ExpenseDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="badge bg-primary">@item.HeadName</span></td>
+                                <td>₹ @item.Amount.ToString("N2")</td>
+                                <td>@item.PaidTo</td>
+                                <td>
+                                    @if (item.PaymentMode == "Cash")
+                                    {
+                                        <span class="badge bg-success">Cash</span>
+                                    }
+                                    else if (item.PaymentMode == "UPI")
+                                    {
+                                        <span class="badge bg-info">UPI</span>
+                                    }
+                                    else if (item.PaymentMode == "Card")
+                                    {
+                                        <span class="badge bg-warning text-dark">Card</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark">@item.PaymentMode</span>
+                                    }
+                                </td>
+                                <td>@item.Description</td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "Expenses"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadExpense(@item.ExpenseId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "Expenses"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.ExpenseId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete this expense?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No Expenses Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editExpenseModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editExpenseContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadExpense(id) {
+        fetch('/Expenses/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editExpenseContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editExpenseModal')).show();
+        });
+    }
+</script>

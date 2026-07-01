@@ -1,0 +1,351 @@
+@model List<GymManagement.Models.StaffAttendance>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Staff Attendance";
+
+    int totalRecords = Model.Count;
+    int presentCount = Model.Count(x => x.Status == "Present");
+    int absentCount = Model.Count(x => x.Status == "Absent");
+    int leaveCount = Model.Count(x => x.Status == "Leave" || x.Status == "HalfDay");
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Staff Attendance</h2>
+            <p class="mb-0">Aaj ki staff attendance mark karein aur records dekhein</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "StaffAttendance" })
+            <a asp-action="History" class="btn btn-outline-primary">
+                <i class="fas fa-clock-rotate-left me-2"></i>Staff History
+            </a>
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "StaffAttendance"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#attendanceForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Mark Attendance
+
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Records</h6>
+                <h2>@totalRecords</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Present</h6>
+                <h2>@presentCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Absent</h6>
+                <h2>@absentCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Leave / Half Day</h6>
+                <h2>@leaveCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="attendanceForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Mark Staff Attendance</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Staff</label>
+                        <select name="StaffId" class="form-select" required>
+                            <option value="">Select Staff</option>
+                            @foreach (var staff in ViewBag.Staff)
+                            {
+                                <option value="@staff.StaffId">@staff.StaffName - @staff.Designation</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Date</label>
+                        <input type="date" name="AttendanceDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Check In</label>
+                        <input type="time" name="CheckInTime" class="form-control" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Check Out</label>
+                        <input type="time" name="CheckOutTime" class="form-control" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Status</label>
+                        <select name="Status" class="form-select" required>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Leave">Leave</option>
+                            <option value="HalfDay">Half Day</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Attendance
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Staff..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="staffId" class="form-select">
+                        <option value="">All Staff</option>
+                        @foreach (var staff in ViewBag.Staff)
+                        {
+                            if (ViewBag.StaffId != null && ViewBag.StaffId.ToString() == staff.StaffId.ToString())
+                            {
+                                <option value="@staff.StaffId" selected>@staff.StaffName</option>
+                            }
+                            else
+                            {
+                                <option value="@staff.StaffId">@staff.StaffName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        @{
+                            var statuses = new[] { "Present", "Absent", "Leave", "HalfDay" };
+                            foreach (var st in statuses)
+                            {
+                                if (ViewBag.Status == st)
+                                {
+                                    <option value="@st" selected>@st</option>
+                                }
+                                else
+                                {
+                                    <option value="@st">@st</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+                </div>
+                <div class="col-md-12 mt-2">
+                    <button class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Attendance List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Staff</th>
+                        <th>Date</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th width="240">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.StaffName</strong><br />
+                                    <small class="text-muted">@item.Designation</small>
+                                </td>
+                                <td>@item.AttendanceDate.ToString("dd MMM yyyy")</td>
+                                <td>@(item.FormattedCheckIn ?? "—")</td>
+                                <td>@(item.FormattedCheckOut ?? "—")</td>
+                                <td>
+                                    @if (item.Status == "Present")
+                                    {
+                                        <span class="badge bg-success">Present</span>
+                                    }
+                                    else if (item.Status == "Absent")
+                                    {
+                                        <span class="badge bg-danger">Absent</span>
+                                    }
+                                    else if (item.Status == "Leave")
+                                    {
+                                        <span class="badge bg-warning text-dark">Leave</span>
+                                    }
+                                    else if (item.Status == "HalfDay")
+                                    {
+                                        <span class="badge bg-info">Half Day</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@item.Status</span>
+                                    }
+                                </td>
+                                <td>@item.Remarks</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                    @if (GymManagement.Helpers.PermissionHelper.CanView(
+                                            Context,
+                                            PermissionRepo,
+                                            "StaffAttendance"))
+                                    {
+                                        <a asp-action="History"
+                                           asp-route-staffId="@item.StaffId"
+                                           asp-route-month="@item.AttendanceDate.Month"
+                                           asp-route-year="@item.AttendanceDate.Year"
+                                           class="btn btn-info btn-sm text-white"
+                                           title="Month-wise attendance">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "StaffAttendance"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadStaffAttendance(@item.AttendanceId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "StaffAttendance"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.AttendanceId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete this attendance record?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No Attendance Records Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editStaffAttendanceModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Staff Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editStaffAttendanceContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadStaffAttendance(id) {
+        fetch('/StaffAttendance/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editStaffAttendanceContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editStaffAttendanceModal')).show();
+        });
+    }
+</script>

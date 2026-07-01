@@ -1,0 +1,336 @@
+@model List<GymManagement.Models.EquipmentMaintenance>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Equipment Maintenance";
+
+    int totalRecords = Model.Count;
+    decimal totalCost = Model.Sum(x => x.Cost);
+    int pendingCount = Model.Count(x => x.Status == "Pending" || x.Status == "Scheduled");
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Equipment Maintenance</h2>
+            <p class="mb-0">Track equipment service and repairs</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "EquipmentMaintenance" })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "EquipmentMaintenance"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#maintenanceForm">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Maintenance
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Records</h6>
+                <h2>@totalRecords</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Total Cost</h6>
+                <h2>@totalCost.ToString("C0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-warning text-white">
+            <div class="card-body">
+                <h6>Pending / Scheduled</h6>
+                <h2>@pendingCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="maintenanceForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Maintenance</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Equipment</label>
+                        <select name="EquipmentId" class="form-select" required>
+                            <option value="">Select Equipment</option>
+                            @foreach (var eq in ViewBag.Equipment)
+                            {
+                                <option value="@eq.EquipmentId">@eq.EquipmentName (@eq.Category)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Maintenance Date</label>
+                        <input type="date" name="MaintenanceDate" class="form-control" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Maintenance Type</label>
+                        <select name="MaintenanceType" class="form-select" required>
+                            <option value="">Select Type</option>
+                            <option value="Preventive">Preventive</option>
+                            <option value="Corrective">Corrective</option>
+                            <option value="AMC">AMC</option>
+                            <option value="Inspection">Inspection</option>
+                            <option value="Repair">Repair</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Cost (₹)</label>
+                        <input type="number" step="0.01" min="0" name="Cost" class="form-control" required />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Payment Mode</label>
+                        <select name="PaymentMode" class="form-select">
+                            <option value="">None</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Vendor Name</label>
+                        <input type="text" name="VendorName" class="form-control" placeholder="Service vendor" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Next Due Date</label>
+                        <input type="date" name="NextDueDate" class="form-control" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Status</label>
+                        <select name="Status" class="form-select" required>
+                            <option value="Completed">Completed</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" placeholder="Optional remarks" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Maintenance
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search equipment/vendor/type..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="equipmentId" class="form-select">
+                        <option value="">All Equipment</option>
+                        @foreach (var eq in ViewBag.Equipment)
+                        {
+                            if (ViewBag.EquipmentId != null && ViewBag.EquipmentId.ToString() == eq.EquipmentId.ToString())
+                            {
+                                <option value="@eq.EquipmentId" selected>@eq.EquipmentName</option>
+                            }
+                            else
+                            {
+                                <option value="@eq.EquipmentId">@eq.EquipmentName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        @{
+                            var statuses = new[] { "Completed", "Scheduled", "Pending", "Cancelled" };
+                            foreach (var s in statuses)
+                            {
+                                if (ViewBag.Status != null && ViewBag.Status.ToString() == s)
+                                {
+                                    <option value="@s" selected>@s</option>
+                                }
+                                else
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>From Date</label>
+                    <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label>To Date</label>
+                    <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+                </div>
+                <div class="col-md-1">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Maintenance List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Cost</th>
+                        <th>Payment</th>
+                        <th>Vendor</th>
+                        <th>Next Due</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.EquipmentName</strong><br />
+                                    <small class="text-muted">@item.Category · @item.Location</small>
+                                </td>
+                                <td>@item.MaintenanceDate.ToString("dd MMM yyyy")</td>
+                                <td>@item.MaintenanceType</td>
+                                <td><strong>@item.Cost.ToString("C0")</strong></td>
+                                <td>@item.PaymentMode</td>
+                                <td>@item.VendorName</td>
+                                <td>@(item.NextDueDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                <td>
+                                    @if (item.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success">@item.Status</span>
+                                    }
+                                    else if (item.Status == "Pending" || item.Status == "Scheduled")
+                                    {
+                                        <span class="badge bg-warning text-dark">@item.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@item.Status</span>
+                                    }
+                                </td>
+                                <td>@item.Remarks</td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "EquipmentMaintenance"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadMaintenance(@item.MaintenanceId)">
+                                            Edit
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "EquipmentMaintenance"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.MaintenanceId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete this maintenance record?')">
+                                            Delete
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">No Maintenance Records Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editMaintenanceModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Equipment Maintenance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editMaintenanceContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadMaintenance(id) {
+        fetch('/EquipmentMaintenance/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editMaintenanceContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editMaintenanceModal')).show();
+        });
+    }
+</script>

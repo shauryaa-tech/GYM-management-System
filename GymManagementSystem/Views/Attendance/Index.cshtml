@@ -1,0 +1,237 @@
+@model List<GymManagement.Models.Attendance>
+
+@{
+    ViewData["Title"] = "Member Attendance";
+
+    int totalPresent = Model.Count;
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Member Attendance</h2>
+            <p class="mb-0">Mark and view daily member check-ins</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Attendance" })
+            <a asp-action="History" class="btn btn-outline-light">
+                <i class="fas fa-clock-rotate-left me-2"></i>Member History
+            </a>
+            <button class="btn btn-light btn-lg" data-bs-toggle="collapse" data-bs-target="#attendanceForm">
+                <i class="fas fa-check-circle me-2"></i>Mark Attendance
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Present (Filtered Date)</h6>
+                <h2>@totalPresent</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="attendanceForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Mark Attendance</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Member</label>
+                        <select name="MemberId" class="form-select" required>
+                            <option value="">Select Member</option>
+                            @foreach (var member in ViewBag.Members)
+                            {
+                                <option value="@member.MemberId">@member.MemberCode - @member.MemberName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Date</label>
+                        <input type="date" name="AttendanceDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Check In Time</label>
+                        <input type="time" name="CheckInTime" class="form-control" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Check Out Time</label>
+                        <input type="time" name="CheckOutTime" class="form-control" />
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Attendance
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SEARCH -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Filter by Date</label>
+                    <input type="date" name="filterDate" value="@(((DateTime)ViewBag.FilterDate).ToString("yyyy-MM-dd"))" class="form-control" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary me-2">Filter</button>
+                    <a asp-action="Index" class="btn btn-secondary">Today</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Attendance List</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Member Code</th>
+                        <th>Member Name</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Remarks</th>
+                        <th width="100">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.AttendanceDate.ToString("dd-MMM-yyyy")</td>
+                                <td>@item.MemberCode</td>
+                                <td>@item.MemberName</td>
+                                <td>@(item.CheckInTime?.ToString(@"hh\:mm") ?? "-")</td>
+                                <td>@(item.CheckOutTime?.ToString(@"hh\:mm") ?? "-")</td>
+                                <td>@item.Remarks</td>
+                                <td>
+
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="loadAttendance(@item.AttendanceId)">
+
+                                        Edit
+
+                                    </button>
+
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.AttendanceId"
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Delete Record?')">
+
+                                        Delete
+
+                                    </a>
+
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No Attendance Records Found For This Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="modal fade"
+                 id="editAttendanceModal">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header bg-warning">
+
+                            <h5 class="modal-title">
+
+                                Edit Attendance
+
+                            </h5>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal">
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body"
+                             id="editAttendanceContainer">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function loadAttendance(id)
+    {
+        fetch('/Attendance/Edit/' + id)
+
+        .then(response => response.text())
+
+        .then(html =>
+        {
+            document.getElementById(
+                'editAttendanceContainer'
+            ).innerHTML = html;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    'editAttendanceModal'
+                )
+            ).show();
+        });
+    }
+
+</script>

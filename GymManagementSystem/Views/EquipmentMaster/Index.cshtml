@@ -1,0 +1,291 @@
+@model List<GymManagement.Models.EquipmentMaster>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Equipment Master";
+
+    int totalEquipment = Model.Count;
+    int goodCondition = Model.Count(x => x.ConditionStatus == "Good");
+    int poorCondition = Model.Count(x => x.ConditionStatus == "Poor");
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Equipment Master</h2>
+            <p class="mb-0">Manage gym equipment and inventory</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Equipment", allowImport = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "Equipment"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#equipmentForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Add Equipment
+
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Equipment</h6>
+                <h2>@totalEquipment</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Good Condition</h6>
+                <h2>@goodCondition</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Poor Condition</h6>
+                <h2>@poorCondition</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="equipmentForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Equipment</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Equipment Name</label>
+                        <input type="text" name="EquipmentName" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Category</label>
+                        <input type="text" name="Category" class="form-control" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Condition Status</label>
+                        <select name="ConditionStatus" class="form-select">
+                            <option value="">Select Condition</option>
+                            <option>Good</option>
+                            <option>Fair</option>
+                            <option>Poor</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Purchase Date</label>
+                        <input type="date" name="PurchaseDate" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Purchase Price (₹)</label>
+                        <input type="number" step="0.01" min="0" name="PurchasePrice" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Quantity</label>
+                        <input type="number" min="1" name="Quantity" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Location</label>
+                        <input type="text" name="Location" class="form-control" />
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label>Remarks</label>
+                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Equipment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SEARCH -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Name, Category, Location..." />
+                </div>
+                <div class="col-md-3">
+                    <select name="conditionStatus" class="form-select">
+                        <option value="">All Conditions</option>
+                        <option value="Good" selected="@(ViewBag.ConditionStatus == "Good")">Good</option>
+                        <option value="Fair" selected="@(ViewBag.ConditionStatus == "Fair")">Fair</option>
+                        <option value="Poor" selected="@(ViewBag.ConditionStatus == "Poor")">Poor</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Equipment List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Equipment Name</th>
+                        <th>Category</th>
+                        <th>Purchase Date</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Condition</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.EquipmentName</td>
+                                <td>@item.Category</td>
+                                <td>@(item.PurchaseDate?.ToString("dd-MMM-yyyy"))</td>
+                                <td>@item.PurchasePrice</td>
+                                <td>@item.Quantity</td>
+                                <td>
+                                    @if (item.ConditionStatus == "Good")
+                                    {
+                                        <span class="badge bg-success">Good</span>
+                                    }
+                                    else if (item.ConditionStatus == "Fair")
+                                    {
+                                        <span class="badge bg-warning text-dark">Fair</span>
+                                    }
+                                    else if (item.ConditionStatus == "Poor")
+                                    {
+                                        <span class="badge bg-danger">Poor</span>
+                                    }
+                                    else
+                                    {
+                                        @item.ConditionStatus
+                                    }
+                                </td>
+                                <td>@item.Location</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Equipment"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadEquipment(@item.EquipmentId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Equipment"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.EquipmentId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete Equipment?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No Equipment Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editEquipmentModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Equipment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editEquipmentContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadEquipment(id) {
+        fetch('/Equipment/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editEquipmentContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editEquipmentModal')).show();
+        });
+    }
+</script>

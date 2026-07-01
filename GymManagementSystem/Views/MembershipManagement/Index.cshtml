@@ -1,0 +1,165 @@
+@model List<GymManagement.Models.MembershipTransaction>
+@{
+    ViewData["Title"] = "Membership Management";
+}
+
+<style>
+    .pay-badge-paid { background: #dcfce7; color: #15803d; }
+    .pay-badge-pending { background: #fee2e2; color: #b91c1c; }
+    .pay-badge-partial { background: #fef3c7; color: #b45309; }
+    .pay-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; }
+</style>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<div class="card shadow border-0">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h4 class="mb-0">Membership Management</h4>
+                <small class="opacity-75">Online payment auto-mark Paid · Cash/UPI ke liye Record Payment</small>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                @await Component.InvokeAsync("ExportImport", new { module = "MembershipManagement" })
+                <a asp-action="Save" class="btn btn-light"><i class="fas fa-plus me-1"></i> Add Membership</a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member</th>
+                        <th>Plan</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th width="220">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var isPaid = string.Equals(item.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+                        var payClass = isPaid ? "pay-badge-paid" : (item.PaymentStatus == "Partial" ? "pay-badge-partial" : "pay-badge-pending");
+                        var payLabel = isPaid ? "Payment Done" : (item.PaymentStatus ?? "Pending");
+                        <tr>
+                            <td class="fw-semibold">@item.MemberName</td>
+                            <td>@item.PlanName</td>
+                            <td>@item.StartDate.ToString("dd-MMM-yyyy")</td>
+                            <td>@item.EndDate.ToString("dd-MMM-yyyy")</td>
+                            <td class="fw-bold">₹@item.Amount.ToString("N0")</td>
+                            <td>
+                                <span class="pay-badge @payClass">
+                                    @if (isPaid)
+                                    {
+                                        <i class="fas fa-check-circle me-1"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-clock me-1"></i>
+                                    }
+                                    @payLabel
+                                </span>
+                            </td>
+                            <td>@item.MembershipStatus</td>
+                            <td>
+                                @if (!isPaid)
+                                {
+                                    <form method="post" asp-action="PayOnline" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="transactionId" value="@item.TransactionId" />
+                                        <button type="submit" class="btn btn-primary btn-sm" title="Pay via gateway">
+                                            <i class="fa-solid fa-building-columns"></i> Online
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-success btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#cashModal"
+                                            data-txn-id="@item.TransactionId"
+                                            data-member="@item.MemberName"
+                                            data-plan="@item.PlanName"
+                                            data-amount="@item.Amount">
+                                        <i class="fas fa-money-bill"></i> Cash
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-success small fw-semibold"><i class="fas fa-check me-1"></i>Paid</span>
+                                }
+                                <a asp-action="Delete" asp-route-id="@item.TransactionId"
+                                   class="btn btn-outline-danger btn-sm"
+                                   onclick="return confirm('Delete this membership?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Cash / Manual Payment Modal -->
+<div class="modal fade" id="cashModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="RecordCashPayment">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="transactionId" id="cashTxnId" />
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-money-bill-wave text-success me-2"></i>Record Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3 text-muted" id="cashSummary"></p>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" name="paymentDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="paymentMode" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Card">Card</option>
+                            <option value="Bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference No (optional)</label>
+                        <input type="text" name="referenceNo" class="form-control" placeholder="UPI txn ID / receipt no" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Mark as Paid
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('cashModal')?.addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            if (!btn) return;
+            document.getElementById('cashTxnId').value = btn.dataset.txnId || '';
+            document.getElementById('cashSummary').textContent =
+                `${btn.dataset.member} — ${btn.dataset.plan} — ₹${Number(btn.dataset.amount).toLocaleString('en-IN')}`;
+        });
+    </script>
+}

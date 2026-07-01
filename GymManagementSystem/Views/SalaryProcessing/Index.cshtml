@@ -1,0 +1,606 @@
+@model List<GymManagement.Models.SalaryProcessing>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Salary Processing";
+
+    int totalRecords = Model.Count;
+    var paidRecords = Model.Where(x => x.IsPaid).ToList();
+    var pendingRecords = Model.Where(x => x.IsPaymentPending).ToList();
+    decimal totalPaid = paidRecords.Sum(x => x.NetSalary);
+    decimal totalPending = pendingRecords.Sum(x => x.NetSalary);
+    decimal totalDeductions = Model.Sum(x => x.Deductions);
+    int currentMonthCount = Model.Count(x => x.Month == DateTime.Today.Month && x.Year == DateTime.Today.Year);
+    var paymentStatusFilter = ViewBag.PaymentStatus as string;
+
+    var monthNames = new Dictionary<int, string>
+    {
+        { 1, "January" }, { 2, "February" }, { 3, "March" }, { 4, "April" },
+        { 5, "May" }, { 6, "June" }, { 7, "July" }, { 8, "August" },
+        { 9, "September" }, { 10, "October" }, { 11, "November" }, { 12, "December" }
+    };
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Salary Processing</h2>
+            <p class="mb-0">Attendance se auto salary generate karein</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a asp-controller="Payroll" asp-action="Index" class="btn btn-outline-light">
+                <i class="fas fa-gauge-high me-1"></i> Payroll Hub
+            </a>
+            <a asp-action="Statement" asp-route-month="@(ViewBag.Month ?? DateTime.Today.Month)" asp-route-year="@(ViewBag.Year ?? DateTime.Today.Year)" class="btn btn-outline-light">
+                <i class="fas fa-table me-1"></i> Salary Statement
+            </a>
+            <a asp-action="BankStatement" asp-route-month="@(ViewBag.Month ?? DateTime.Today.Month)" asp-route-year="@(ViewBag.Year ?? DateTime.Today.Year)" class="btn btn-outline-light">
+                <i class="fas fa-university me-1"></i> Bank Statement
+            </a>
+            @await Component.InvokeAsync("ExportImport", new { module = "SalaryProcessing", allowImport = true, exportAsExcel = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryRuleMaster"))
+            {
+                <a asp-controller="SalaryRuleMaster" asp-action="Index" class="btn btn-outline-light"><i class="fas fa-book me-1"></i> Rule Master</a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(Context, PermissionRepo, "SalaryProcessing"))
+            {
+                <button class="btn btn-light btn-lg" data-bs-toggle="collapse" data-bs-target="#salaryForm">
+                    <i class="fas fa-plus me-2"></i> Manual Entry
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- AUTO GENERATE FROM ATTENDANCE -->
+<div class="card shadow border-0 mb-4" style="border-left: 4px solid #10b981 !important;">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Generate Salary from Attendance</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Generate" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Staff</label>
+                <select name="staffId" class="form-select" required id="genStaffSelect">
+                    <option value="">Select Staff</option>
+                    @foreach (var staff in ViewBag.Staff)
+                    {
+                        <option value="@staff.StaffId">@staff.StaffName — @staff.Designation (₹@staff.Salary)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Salary Rule</label>
+                <select name="ruleId" class="form-select" id="genRuleSelect" required>
+                    @{
+                        var rules = ViewBag.SalaryRules as List<GymManagement.Models.SalaryRuleMaster> ?? new();
+                        if (!rules.Any())
+                        {
+                            <option value="">Pehle Rule Master se rule add karein</option>
+                        }
+                        else
+                        {
+                            foreach (var rule in rules)
+                            {
+                                if (rule.IsDefault)
+                                {
+                                    <option value="@rule.RuleId" selected>@rule.RuleName (Default)</option>
+                                }
+                                else
+                                {
+                                    <option value="@rule.RuleId">@rule.RuleName</option>
+                                }
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Month</label>
+                <select name="month" class="form-select" id="genMonth">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m" selected="@(m == DateTime.Today.Month)">@monthNames[m]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Year</label>
+                <input type="number" name="year" class="form-control" value="@DateTime.Today.Year" min="2020" max="2099" id="genYear" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100"><i class="fas fa-calculator me-2"></i>Preview</button>
+            </div>
+        </form>
+        <div id="salaryPreviewBox" class="mt-3 p-3 rounded bg-light small d-none"></div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Records</h6>
+                <h2>@totalRecords</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Paid (@paidRecords.Count)</h6>
+                <h2>₹ @totalPaid.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Pending (@pendingRecords.Count)</h6>
+                <h2>₹ @totalPending.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Total Deductions</h6>
+                <h2>₹ @totalDeductions.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>This Month</h6>
+                <h2>@currentMonthCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="salaryForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Process New Salary</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Staff</label>
+                        <select name="StaffId" class="form-select" required id="staffSelect">
+                            <option value="">Select Staff</option>
+                            @foreach (var staff in ViewBag.Staff)
+                            {
+                                <option value="@staff.StaffId" data-salary="@staff.Salary">@staff.StaffName - @staff.Designation</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Month</label>
+                        <select name="Month" class="form-select" required>
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                if (m == DateTime.Today.Month)
+                                {
+                                    <option value="@m" selected>@monthNames[m]</option>
+                                }
+                                else
+                                {
+                                    <option value="@m">@monthNames[m]</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Year</label>
+                        <input type="number" name="Year" class="form-control" value="@DateTime.Today.Year" min="2020" max="2099" required />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label>Basic Salary (₹)</label>
+                        <input type="number" step="0.01" min="0" name="BasicSalary" class="form-control" id="basicSalaryInput" required />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Deductions (₹)</label>
+                        <input type="number" step="0.01" min="0" name="Deductions" class="form-control" id="deductionsInput" value="0" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Net Salary (₹)</label>
+                        <input type="number" step="0.01" min="0" name="NetSalary" class="form-control" id="netSalaryInput" readonly />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Paid Date</label>
+                        <input type="date" name="PaidDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Payment Mode</label>
+                        <select name="PaymentMode" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Process Salary
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Staff..." />
+                </div>
+                <div class="col-md-2">
+                    <select name="staffId" class="form-select">
+                        <option value="">All Staff</option>
+                        @foreach (var staff in ViewBag.Staff)
+                        {
+                            if (ViewBag.StaffId != null && ViewBag.StaffId.ToString() == staff.StaffId.ToString())
+                            {
+                                <option value="@staff.StaffId" selected>@staff.StaffName</option>
+                            }
+                            else
+                            {
+                                <option value="@staff.StaffId">@staff.StaffName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="month" class="form-select">
+                        <option value="">All Months</option>
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            if (ViewBag.Month != null && ViewBag.Month.ToString() == m.ToString())
+                            {
+                                <option value="@m" selected>@monthNames[m]</option>
+                            }
+                            else
+                            {
+                                <option value="@m">@monthNames[m]</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="year" value="@ViewBag.Year" class="form-control" placeholder="Year" min="2020" max="2099" />
+                </div>
+                <div class="col-md-2">
+                    <select name="paymentStatus" class="form-select">
+                        <option value="">All Status</option>
+                        @if (paymentStatusFilter == "paid")
+                        {
+                            <option value="paid" selected>Paid</option>
+                        }
+                        else
+                        {
+                            <option value="paid">Paid</option>
+                        }
+                        @if (paymentStatusFilter == "pending")
+                        {
+                            <option value="pending" selected>Pending</option>
+                        }
+                        else
+                        {
+                            <option value="pending">Pending</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100">Search</button>
+                </div>
+                <div class="col-md-1">
+                    <a asp-action="Index" class="btn btn-secondary w-100">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Salary List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Staff</th>
+                        <th>Period</th>
+                        <th>Attendance</th>
+                        <th>Basic</th>
+                        <th>Deductions</th>
+                        <th>Net Salary</th>
+                        <th>Status</th>
+                        <th>Paid Date</th>
+                        <th>Payment Mode</th>
+                        <th width="280">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.StaffName</strong><br />
+                                    <small class="text-muted">@item.Designation</small>
+                                </td>
+                                <td>@monthNames.GetValueOrDefault(item.Month, item.Month.ToString()) @item.Year</td>
+                                <td class="small text-muted">
+                                    @if (item.PresentDays.HasValue)
+                                    {
+                                        <span class="text-success">P:@item.PresentDays</span>
+                                        <span class="text-danger ms-1">A:@item.AbsentDays</span>
+                                        <span class="text-warning ms-1">L:@item.LeaveDays</span>
+                                        <span class="text-info ms-1">H:@item.HalfDays</span>
+                                    }
+                                    else { <span>—</span> }
+                                </td>
+                                <td>₹ @item.BasicSalary.ToString("N2")</td>
+                                <td>₹ @item.Deductions.ToString("N2")</td>
+                                <td><strong>₹ @item.NetSalary.ToString("N2")</strong></td>
+                                <td>
+                                    @if (item.IsPaid)
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Paid</span>
+                                    }
+                                    else if (item.IsPaymentPending)
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">—</span>
+                                    }
+                                </td>
+                                <td>@(item.PaidDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                <td>
+                                    @if (item.IsPaymentPending)
+                                    {
+                                        <span class="badge bg-warning text-dark">Awaiting Payment</span>
+                                    }
+                                    else if (item.PaymentMode == "Cash")
+                                    {
+                                        <span class="badge bg-success">Cash</span>
+                                    }
+                                    else if (string.Equals(item.PaymentMode, "Pending", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="badge bg-warning text-dark">Online Pending</span>
+                                    }
+                                    else if (item.PaymentMode == "UPI")
+                                    {
+                                        <span class="badge bg-info">UPI</span>
+                                    }
+                                    else if (item.PaymentMode == "Card")
+                                    {
+                                        <span class="badge bg-warning text-dark">Card</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark">@item.PaymentMode</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.IsPaymentPending &&
+                                         GymManagement.Helpers.PermissionHelper.CanAdd(
+                                             Context,
+                                             PermissionRepo,
+                                             "SalaryProcessing"))
+                                    {
+                                        <form method="post" asp-action="PayOnline" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="salaryId" value="@item.SalaryId" />
+                                            <button type="submit" class="btn btn-primary btn-sm" title="Pay via configured gateway">
+                                                <i class="fa-solid fa-building-columns"></i> Pay Online
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-success btn-sm"
+                                                onclick="openMarkPaid(@item.SalaryId, '@item.StaffName?.Replace("'", "\\'")', @item.NetSalary.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture))"
+                                                title="Mark as paid manually">
+                                            <i class="fas fa-check"></i> Mark Paid
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "SalaryProcessing"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadSalaryProcessing(@item.SalaryId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "SalaryProcessing"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.SalaryId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete this salary record?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">No Salary Records Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="markPaidModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="MarkAsPaid">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="salaryId" id="markPaidSalaryId" />
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Mark Salary as Paid</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3"><strong id="markPaidStaffName"></strong> — <span id="markPaidAmount" class="text-success fw-bold"></span></p>
+                    <div class="mb-3">
+                        <label class="form-label">Paid Date</label>
+                        <input type="date" name="paidDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="paymentMode" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks (optional)</label>
+                        <input type="text" name="remarks" class="form-control" placeholder="Manual payment note" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Confirm Paid
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSalaryProcessingModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Salary Record</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editSalaryProcessingContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateNetSalary() {
+        var basic = parseFloat(document.getElementById('basicSalaryInput').value) || 0;
+        var deductions = parseFloat(document.getElementById('deductionsInput').value) || 0;
+        document.getElementById('netSalaryInput').value = (basic - deductions).toFixed(2);
+    }
+
+    document.getElementById('staffSelect').addEventListener('change', function() {
+        var selectedOption = this.options[this.selectedIndex];
+        var salary = selectedOption.getAttribute('data-salary');
+        if (salary) {
+            document.getElementById('basicSalaryInput').value = salary;
+            calculateNetSalary();
+        }
+    });
+
+    document.getElementById('basicSalaryInput').addEventListener('input', calculateNetSalary);
+    document.getElementById('deductionsInput').addEventListener('input', calculateNetSalary);
+
+    function loadSalaryProcessing(id) {
+        fetch('/SalaryProcessing/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editSalaryProcessingContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editSalaryProcessingModal')).show();
+        });
+    }
+
+    function openMarkPaid(salaryId, staffName, amount) {
+        document.getElementById('markPaidSalaryId').value = salaryId;
+        document.getElementById('markPaidStaffName').textContent = staffName;
+        document.getElementById('markPaidAmount').textContent = '₹' + Number(amount).toLocaleString('en-IN');
+        new bootstrap.Modal(document.getElementById('markPaidModal')).show();
+    }
+
+    function refreshSalaryPreview() {
+        const staffId = document.getElementById('genStaffSelect')?.value;
+        const month = document.getElementById('genMonth')?.value;
+        const year = document.getElementById('genYear')?.value;
+        const ruleId = document.getElementById('genRuleSelect')?.value;
+        const box = document.getElementById('salaryPreviewBox');
+        if (!staffId || !ruleId || !box) return;
+
+        fetch(`/SalaryProcessing/PreviewSalary?staffId=${staffId}&month=${month}&year=${year}&ruleId=${ruleId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    box.classList.remove('d-none');
+                    box.innerHTML = `<span class="text-danger">${data.message || 'Preview failed'}</span>`;
+                    return;
+                }
+                box.classList.remove('d-none');
+                box.innerHTML = `<strong>Rule:</strong> ${data.ruleName} | <strong>Preview:</strong> Present ${data.presentDays} | Absent ${data.absentDays} | Leave ${data.leaveDays} | Half ${data.halfDays} 
+                    → Deduction ₹${Number(data.deductions).toLocaleString('en-IN')} → <strong class="text-success">Net ₹${Number(data.netSalary).toLocaleString('en-IN')}</strong>
+                    ${data.alreadyProcessed ? '<span class="text-success ms-2">(Paid)</span>' : ''}
+                    ${data.isPaymentPending ? '<span class="text-warning ms-2">(Payment Pending)</span>' : ''}`;
+            });
+    }
+
+    document.getElementById('genStaffSelect')?.addEventListener('change', refreshSalaryPreview);
+    document.getElementById('genRuleSelect')?.addEventListener('change', refreshSalaryPreview);
+    document.getElementById('genMonth')?.addEventListener('change', refreshSalaryPreview);
+    document.getElementById('genYear')?.addEventListener('input', refreshSalaryPreview);
+</script>

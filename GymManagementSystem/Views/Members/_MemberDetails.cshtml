@@ -1,0 +1,260 @@
+﻿@model GymManagement.Models.MemberMaster
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- Profile -->
+
+        <div class="col-md-4">
+
+            <div class="card shadow border-0">
+
+                <div class="card-body text-center">
+
+                    <img src="/images/user.png"
+                         width="120"
+                         class="rounded-circle mb-3" />
+
+                    <h4>
+
+                        @Model.MemberName
+
+                    </h4>
+
+                    <p class="text-muted">
+
+                        @Model.MemberCode
+
+                    </p>
+
+                    @if (Model.Status == "Active")
+                    {
+                        <span class="badge bg-success">
+
+                            Active
+
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">
+
+                            @Model.Status
+
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Details -->
+
+        <div class="col-md-8">
+
+            <div class="card shadow border-0">
+
+                <div class="card-header bg-primary text-white">
+
+                    <h5>
+
+                        Member Information
+
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <table class="table table-bordered">
+
+                        <tr>
+
+                            <th width="35%">
+
+                                Mobile
+
+                            </th>
+
+                            <td>
+
+                                @Model.MobileNo
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Email
+
+                            </th>
+
+                            <td>
+
+                                @Model.Email
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Gender
+
+                            </th>
+
+                            <td>
+
+                                @Model.Gender
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Trainer
+
+                            </th>
+
+                            <td>
+
+                                @Model.TrainerName
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Membership Plan
+
+                            </th>
+
+                            <td>
+
+                                @Model.PlanName
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Join Date
+
+                            </th>
+
+                            <td>
+
+                                @Model.JoinDate.ToString("dd-MMM-yyyy")
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Height
+
+                            </th>
+
+                            <td>
+
+                                @Model.Height Kg
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Weight
+
+                            </th>
+
+                            <td>
+
+                                @Model.Weight Kg
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Emergency Contact
+
+                            </th>
+
+                            <td>
+
+                                @Model.EmergencyContact
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Medical Notes
+
+                            </th>
+
+                            <td>
+
+                                @Model.MedicalNotes
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>
+
+                                Address
+
+                            </th>
+
+                            <td>
+
+                                @Model.Address
+
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

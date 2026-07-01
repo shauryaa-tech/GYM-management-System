@@ -1,0 +1,171 @@
+@model GymManagement.ViewModels.PaymentGatewayFormViewModel
+
+
+
+<input type="hidden" asp-for="Id" />
+
+<input type="hidden" asp-for="ValidationToken" id="ValidationToken" />
+
+<input type="hidden" asp-for="IsValidated" id="IsValidated" />
+
+<input type="hidden" asp-for="HasExistingKey" />
+
+<input type="hidden" asp-for="DisplayName" id="DisplayName" />
+
+<input type="hidden" asp-for="CallbackUrl" id="CallbackUrl" />
+
+<input type="hidden" asp-for="SandboxBaseUrl" id="SandboxBaseUrl" />
+
+<input type="hidden" asp-for="ProductionBaseUrl" id="ProductionBaseUrl" />
+
+<input type="hidden" asp-for="MID" id="MID" />
+
+<input type="hidden" asp-for="ChannelId" id="ChannelId" />
+
+<input type="hidden" asp-for="Website" id="Website" />
+
+<input type="hidden" asp-for="IndustryType" id="IndustryType" />
+
+
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="GatewayName" class="form-label"></label>
+
+        <select asp-for="GatewayName" class="form-select pg-field" id="GatewayName">
+
+            <option value="Paytm">Paytm</option>
+
+            <option value="PhonePe">PhonePe</option>
+
+            <option value="Razorpay">Razorpay</option>
+
+            <option value="Cashfree">Cashfree</option>
+
+        </select>
+
+        <span asp-validation-for="GatewayName" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="Environment" class="form-label"></label>
+
+        <select asp-for="Environment" class="form-select pg-field" id="Environment">
+
+            <option value="Sandbox">Sandbox (Test)</option>
+
+            <option value="Production">Production (Live)</option>
+
+        </select>
+
+    </div>
+
+</div>
+
+
+
+<div class="alert alert-info py-2 mb-3" id="gatewayHelp">
+
+    Select a gateway and enter your Key ID and Key Secret. Other settings are filled automatically.
+
+</div>
+
+
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="MerchantId" class="form-label">Key ID</label>
+
+        <input asp-for="MerchantId" class="form-control pg-field" id="MerchantId" autocomplete="off" placeholder="Enter Key ID / Merchant ID / App ID" />
+
+        <span asp-validation-for="MerchantId" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="MerchantKey" class="form-label">Key Secret</label>
+
+        <input asp-for="MerchantKey" class="form-control pg-field" id="MerchantKey" autocomplete="new-password" placeholder="@(Model.HasExistingKey ? "Leave blank to keep existing secret" : "Enter Key Secret")" />
+
+        <span asp-validation-for="MerchantKey" class="text-danger"></span>
+
+        @if (Model.HasExistingKey)
+
+        {
+
+            <small class="text-muted">Existing secret is saved securely. Re-enter only if you want to change it.</small>
+
+        }
+
+    </div>
+
+</div>
+
+
+
+<div class="row">
+
+    <div class="col-md-4 mb-3">
+
+        <div class="form-check">
+
+            <input asp-for="IsActive" class="form-check-input" id="IsActive" />
+
+            <label asp-for="IsActive" class="form-check-label">Active</label>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4 mb-3">
+
+        <div class="form-check">
+
+            <input asp-for="IsDefault" class="form-check-input" id="IsDefault" />
+
+            <label asp-for="IsDefault" class="form-check-label">Set as Default Gateway</label>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div id="autoConfigPreview" class="small text-muted mb-3"></div>
+
+
+
+<div id="validationResult" class="alert d-none mb-3"></div>
+
+
+
+<div class="d-flex flex-wrap gap-2">
+
+    <button type="button" id="btnValidateApi" class="btn btn-warning">
+
+        <span class="validate-text"><i class="fa-solid fa-shield-halved me-2"></i>Validate API</span>
+
+        <span class="validate-spinner d-none spinner-border spinner-border-sm"></span>
+
+    </button>
+
+    <button type="submit" id="btnSaveGateway" class="btn btn-success" disabled>
+
+        <i class="fa-solid fa-save me-2"></i>Save
+
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+</div>
+
+

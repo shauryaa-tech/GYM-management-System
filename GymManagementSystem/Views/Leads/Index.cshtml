@@ -1,0 +1,815 @@
+@model List<GymManagement.Models.Lead>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Lead Management";
+
+    int totalLeads = Model.Count;
+    int newLeads = Model.Count(x => x.Status == "New");
+    int convertedLeads = Model.Count(x => x.IsConverted);
+    int followUps = Model.Count(x => x.FollowUpDate != null &&
+                                     x.FollowUpDate.Value.Date == DateTime.Today);
+}
+<style>
+
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+    }
+
+    .btn {
+        border-radius: 10px;
+    }
+
+    .table td,
+    .table th {
+        vertical-align: middle;
+    }
+
+</style>
+<div class="page-header">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Lead Management
+            </h2>
+
+            <p class="mb-0">
+                Manage gym leads and follow-up records
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Leads", allowImport = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "Leads"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#leadForm">
+
+                    <i class="fas fa-plus me-2"></i>
+
+                    Add Lead
+
+                </button>
+            }
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card stats-card bg-primary text-white">
+
+            <div class="card-body">
+
+                <h6>Total Leads</h6>
+
+                <h2>@totalLeads</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stats-card bg-success text-white">
+
+            <div class="card-body">
+
+                <h6>New Leads</h6>
+
+                <h2>@newLeads</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stats-card bg-warning text-dark">
+
+            <div class="card-body">
+
+                <h6>Today's Follow Ups</h6>
+
+                <h2>@followUps</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card stats-card bg-dark text-white">
+
+            <div class="card-body">
+
+                <h6>Converted Leads</h6>
+
+                <h2>@convertedLeads</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="collapse mb-4"
+     id="leadForm">
+
+    <div class="card shadow border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <h5 class="mb-0">
+                Add New Lead
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="post"
+                  asp-action="Save">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Lead Name
+                        </label>
+
+                        <input type="text"
+                               name="LeadName"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Mobile Number
+                        </label>
+
+                        <input type="text"
+                               name="MobileNo"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Alternate Mobile
+                        </label>
+
+                        <input type="text"
+                               name="AlternateMobile"
+                               class="form-control" />
+
+                    </div>
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Email
+                        </label>
+
+                        <input type="email"
+                               name="Email"
+                               class="form-control" />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Gender
+                        </label>
+
+                        <select name="Gender"
+                                class="form-select">
+
+                            <option value="">Select Gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Interested In
+                        </label>
+
+                        <select name="InterestedIn"
+                                class="form-select">
+                            <option value="">Select Interest</option>
+                            @foreach (var interest in GymManagement.Helpers.TrainerInterestOptions.All)
+                            {
+                                <option value="@interest">@interest</option>
+                            }
+                        </select>
+                        <small class="text-muted">Trainer auto-assign hoga is interest ke basis par</small>
+
+                    </div>
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Lead Source
+                        </label>
+
+                        <select name="LeadSourceId"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Select Lead Source
+                            </option>
+
+                            @foreach (var source in ViewBag.LeadSources)
+                            {
+                                <option value="@source.LeadSourceId">
+                                    @source.SourceName
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Assigned Staff
+                        </label>
+
+                        <select name="AssignedTo"
+                                class="form-select">
+
+                            <option value="">
+                                Select Staff
+                            </option>
+
+                            @foreach (var staff in ViewBag.Staffs)
+                            {
+                                <option value="@staff.StaffId">
+                                    @staff.StaffName
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select name="Status"
+                                class="form-select">
+
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Interested">Interested</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="Converted">Converted</option>
+                            <option value="Lost">Lost</option>
+
+                        </select>
+
+                    </div>
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Budget
+                        </label>
+
+                        <input type="number"
+                               name="Budget"
+                               class="form-control"
+                               step="0.01"
+                               min="0" />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Follow Up Date
+                        </label>
+
+                        <input type="date"
+                               name="FollowUpDate"
+                               class="form-control" />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+
+                        <label class="form-label">
+                            Address
+                        </label>
+
+                        <textarea name="Address"
+                                  rows="2"
+                                  class="form-control"></textarea>
+
+                    </div>
+                    <div class="col-md-12 mb-3">
+
+                        <label class="form-label">
+                            Remarks
+                        </label>
+
+                        <textarea name="Remarks"
+                                  rows="3"
+                                  class="form-control"></textarea>
+
+                    </div>
+
+                </div>
+
+                <div class="text-end">
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        <i class="fas fa-save me-2"></i>
+
+                        Save Lead
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row">
+                <div class="col-md-3 mb-2">
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search Lead Name, Mobile or Email" />
+
+                </div>
+                <div class="col-md-2 mb-2">
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">All Status</option>
+
+                        @if (ViewBag.Status?.ToString() == "New")
+                        {
+                            <option value="New" selected>New</option>
+                        }
+                        else
+                        {
+                            <option value="New">New</option>
+                        }
+
+                        @if (ViewBag.Status?.ToString() == "Contacted")
+                        {
+                            <option value="Contacted" selected>Contacted</option>
+                        }
+                        else
+                        {
+                            <option value="Contacted">Contacted</option>
+                        }
+
+                        @if (ViewBag.Status?.ToString() == "Interested")
+                        {
+                            <option value="Interested" selected>Interested</option>
+                        }
+                        else
+                        {
+                            <option value="Interested">Interested</option>
+                        }
+
+                        @if (ViewBag.Status?.ToString() == "Follow-up")
+                        {
+                            <option value="Follow-up" selected>Follow-up</option>
+                        }
+                        else
+                        {
+                            <option value="Follow-up">Follow-up</option>
+                        }
+
+                        @if (ViewBag.Status?.ToString() == "Converted")
+                        {
+                            <option value="Converted" selected>Converted</option>
+                        }
+                        else
+                        {
+                            <option value="Converted">Converted</option>
+                        }
+
+                        @if (ViewBag.Status?.ToString() == "Lost")
+                        {
+                            <option value="Lost" selected>Lost</option>
+                        }
+                        else
+                        {
+                            <option value="Lost">Lost</option>
+                        }
+
+                    </select>
+
+                </div>
+                <div class="col-md-3 mb-2">
+
+                    <select name="sourceId"
+                            class="form-select">
+
+                        <option value="">
+                            All Lead Sources
+                        </option>
+
+                        @foreach (var source in ViewBag.LeadSources)
+                        {
+                            if (ViewBag.SourceId != null &&
+                            ViewBag.SourceId.ToString() == source.LeadSourceId.ToString())
+                            {
+                                <option value="@source.LeadSourceId" selected>
+                                    @source.SourceName
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@source.LeadSourceId">
+                                    @source.SourceName
+                                </option>
+                            }
+                        }
+
+                    </select>
+
+                </div>
+                <div class="col-md-2 mb-2">
+
+                    <select name="assignedTo"
+                            class="form-select">
+
+                        <option value="">
+                            All Staff
+                        </option>
+
+                        @foreach (var staff in ViewBag.Staffs)
+                        {
+                            if (ViewBag.AssignedTo != null &&
+                            ViewBag.AssignedTo.ToString() == staff.StaffId.ToString())
+                            {
+                                <option value="@staff.StaffId" selected>
+                                    @staff.StaffName
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@staff.StaffId">
+                                    @staff.StaffName
+                                </option>
+                            }
+                        }
+
+                    </select>
+
+                </div>
+                <div class="col-md-2 mb-2">
+
+                    <button type="submit"
+                            class="btn btn-primary me-2">
+
+                        <i class="fas fa-search me-1"></i>
+
+                        Search
+
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+<div class="card shadow border-0">
+
+    <div class="card-header bg-dark text-white">
+
+        <h5 class="mb-0">
+
+            Lead List (@Model.Count)
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Lead Code</th>
+
+                        <th>Lead Name</th>
+
+                        <th>Mobile</th>
+
+                        <th>Interested In</th>
+
+                        <th>Lead Source</th>
+
+                        <th>Assigned Staff</th>
+
+                        <th>Status</th>
+
+                        <th>Follow Up</th>
+
+                        <th width="170">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @item.LeadCode
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        @item.LeadName
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    @item.MobileNo
+                                </td>
+
+                                <td>
+                                    @item.InterestedIn
+                                </td>
+
+                                <td>
+                                    @item.LeadSourceName
+                                </td>
+
+                                <td>
+                                    @item.AssignedStaffName
+                                </td>
+                                <td>
+
+                                    @if (item.Status == "New")
+                                    {
+                                        <span class="badge bg-primary">
+                                            New
+                                        </span>
+                                    }
+                                    else if (item.Status == "Contacted")
+                                    {
+                                        <span class="badge bg-info">
+                                            Contacted
+                                        </span>
+                                    }
+                                    else if (item.Status == "Interested")
+                                    {
+                                        <span class="badge bg-success">
+                                            Interested
+                                        </span>
+                                    }
+                                    else if (item.Status == "Follow-up")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Follow-up
+                                        </span>
+                                    }
+                                    else if (item.Status == "Converted")
+                                    {
+                                        <span class="badge bg-success">
+                                            Converted
+                                        </span>
+                                    }
+                                    else if (item.Status == "Lost")
+                                    {
+                                        <span class="badge bg-danger">
+                                            Lost
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @item.Status
+                                        </span>
+                                    }
+
+                                </td>
+                                <td>
+
+                                    @if (item.FollowUpDate != null)
+                                    {
+                                        @item.FollowUpDate?.ToString("dd-MMM-yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            -
+                                        </span>
+                                    }
+
+                                </td>
+                                <td>
+
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Leads"))
+                                    {
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm"
+                                                onclick="loadLead(@item.LeadId)">
+
+                                            <i class="fas fa-edit"></i>
+
+                                        </button>
+                                    }
+
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Leads"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.LeadId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Are you sure you want to delete this lead?')">
+
+                                            <i class="fas fa-trash"></i>
+
+                                        </a>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+
+                            <td colspan="9"
+                                class="text-center text-muted py-4">
+
+                                No Leads Found.
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="modal fade"
+     id="editLeadModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-xl">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning">
+
+                <h5 class="modal-title">
+
+                    Edit Lead
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body"
+                 id="editLeadContainer">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+    function loadLead(id)
+    {
+        fetch('/Leads/Edit/' + id)
+
+            .then(response => response.text())
+
+            .then(html => {
+
+                document.getElementById(
+                    'editLeadContainer'
+                ).innerHTML = html;
+
+                var modal = new bootstrap.Modal(
+                    document.getElementById('editLeadModal')
+                );
+
+                modal.show();
+
+            });
+    }
+
+</script>

@@ -1,0 +1,279 @@
+@model List<GymManagement.Models.ClassMaster>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Class Master";
+
+    int totalClasses = Model.Count;
+    int activeClasses = Model.Count(x => x.IsActive);
+    int inactiveClasses = Model.Count(x => !x.IsActive);
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Class Master</h2>
+            <p class="mb-0">Manage classes and schedules</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Classes", allowImport = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "Classes"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#classForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Add Class
+
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Classes</h6>
+                <h2>@totalClasses</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Active</h6>
+                <h2>@activeClasses</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-dark text-white">
+            <div class="card-body">
+                <h6>Inactive</h6>
+                <h2>@inactiveClasses</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="classForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Class</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Class Name</label>
+                        <input type="text" name="ClassName" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Trainer</label>
+                        <select name="TrainerId" class="form-select">
+                            <option value="">Select Trainer</option>
+                            @foreach (var trainer in ViewBag.Trainers)
+                            {
+                                <option value="@trainer.StaffId">@trainer.StaffName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Schedule (Days)</label>
+                        <input type="text" name="Schedule" class="form-control" placeholder="e.g. Mon/Wed/Fri" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Start Time</label>
+                        <input type="time" name="StartTime" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>End Time</label>
+                        <input type="time" name="EndTime" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Max Capacity</label>
+                        <input type="number" min="1" name="MaxCapacity" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Amount (₹)</label>
+                        <input type="number" step="0.01" min="0" name="Amount" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Class
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SEARCH -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Class Name..." />
+                </div>
+                <div class="col-md-3">
+                    <select name="trainerId" class="form-select">
+                        <option value="">All Trainers</option>
+                        @foreach (var trainer in ViewBag.Trainers)
+                        {
+                            if (ViewBag.TrainerId != null && ViewBag.TrainerId.ToString() == trainer.StaffId.ToString())
+                            {
+                                <option value="@trainer.StaffId" selected>@trainer.StaffName</option>
+                            }
+                            else
+                            {
+                                <option value="@trainer.StaffId">@trainer.StaffName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Class List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Trainer</th>
+                        <th>Schedule</th>
+                        <th>Timings</th>
+                        <th>Capacity</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ClassName</td>
+                                <td>@item.TrainerName</td>
+                                <td>@item.Schedule</td>
+                                <td>
+                                    @(item.StartTime?.ToString(@"hh\:mm")) - @(item.EndTime?.ToString(@"hh\:mm"))
+                                </td>
+                                <td>@item.MaxCapacity</td>
+                                <td>@item.Amount</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Classes"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadClass(@item.ClassId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                                Context,
+                                                                PermissionRepo,
+                                                                "Classes"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.ClassId"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Delete Class?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No Classes Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editClassModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Class</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editClassContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadClass(id) {
+        fetch('/Classes/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editClassContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editClassModal')).show();
+        });
+    }
+</script>

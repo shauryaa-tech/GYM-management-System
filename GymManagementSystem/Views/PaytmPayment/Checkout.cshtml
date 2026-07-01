@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Paytm Checkout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Redirecting to Paytm Checkout</h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="mb-0">Please wait while we redirect you to complete payment for order <strong>@ViewBag.OrderId</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/@ViewBag.OrderId.js"></script>
+<script>
+    // Placeholder checkout view for Paytm JS SDK integration.
+    // Production flow uses txnToken from InitiatePaymentAsync and Paytm Checkout JS.
+    console.log('Order:', '@ViewBag.OrderId', 'Token:', '@ViewBag.TxnToken', 'Amount:', '@ViewBag.Amount');
+</script>

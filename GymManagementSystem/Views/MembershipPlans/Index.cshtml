@@ -1,0 +1,563 @@
+﻿@using System.Linq
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@model List<GymManagement.Models.MembershipPlanMaster>
+
+@{
+    ViewData["Title"] = "Membership Plans";
+
+    int totalPlans = Model?.Count ?? 0;
+    int activePlans = Model?.Count(x => x.IsActive) ?? 0;
+    int inactivePlans = Model?.Count(x => !x.IsActive) ?? 0;
+}
+
+<style>
+
+    .page-header {
+        background: linear-gradient(135deg,#4f46e5,#7c3aed);
+        color: white;
+        padding: 25px;
+        border-radius: 18px;
+        margin-bottom: 25px;
+    }
+
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        transition: .3s;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+        }
+
+    .plan-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+        overflow: hidden;
+    }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,.12);
+        }
+
+    .price-text {
+        font-size: 28px;
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+    .action-btn {
+        border-radius: 10px;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+    }
+
+</style>
+
+<div class="page-header">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <h2 class="mb-1 fw-bold">
+                Membership Plans
+            </h2>
+
+            <p class="mb-0">
+                Manage gym membership plans
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "MembershipPlans", allowImport = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "MembershipPlans"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#planForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Add Plan
+
+                </button>
+            }
+        </div>
+
+    </div>
+
+</div>
+
+<div class="collapse mb-4" id="planForm">
+
+    <div class="card shadow border-0">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                Add New Membership Plan
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post"
+                  asp-action="Save">
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Plan Name
+                        </label>
+
+                        <input type="text"
+                               name="PlanName"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Duration (Months)
+                        </label>
+
+                        <input type="number"
+                               name="DurationMonths"
+                               min="1"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Amount
+                        </label>
+
+                        <input type="number"
+                               name="Amount"
+                               min="0"
+                               step="0.01"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+
+                        <label class="form-label">
+                            Joining Fee
+                        </label>
+
+                        <input type="number"
+                               name="JoiningFee"
+                               min="0"
+                               step="0.01"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-5 mb-3">
+
+                        <label class="form-label">
+                            Description
+                        </label>
+
+                        <input type="text"
+                               name="Description"
+                               class="form-control" />
+
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select name="IsActive"
+                                class="form-select">
+
+                            <option value="true">
+                                Active
+                            </option>
+
+                            <option value="false">
+                                Inactive
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    Save Plan
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row mb-4">
+
+    <div class="col-md-4">
+
+        <div class="card stats-card bg-primary text-white">
+
+            <div class="card-body">
+
+                <h6>Total Plans</h6>
+                <h2>@totalPlans</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card stats-card bg-success text-white">
+
+            <div class="card-body">
+
+                <h6>Active Plans</h6>
+                <h2>@activePlans</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card stats-card bg-danger text-white">
+
+            <div class="card-body">
+
+                <h6>Inactive Plans</h6>
+                <h2>@inactivePlans</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row">
+
+                <div class="col-md-5">
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search Plan..." />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="true">
+                            Active
+                        </option>
+
+                        <option value="false">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button class="btn btn-success">
+                        Search
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        Reset
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@if (Model.Count > 0)
+{
+    <div class="row">
+
+        @foreach (var item in Model)
+        {
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+
+                <div class="card plan-card shadow-sm h-100">
+
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+
+                            <h5 class="fw-bold mb-0">
+                                @item.PlanName
+                            </h5>
+
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    Inactive
+                                </span>
+                            }
+
+                    </div>
+
+                    <div class="text-center mb-3">
+
+                        <div class="price-text">
+                            ₹@item.Amount.ToString("N0")
+                        </div>
+
+                        <small class="text-muted">
+                            Membership Fee
+                        </small>
+
+                    </div>
+
+                    <div class="mb-2">
+
+                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+
+                        <strong>
+                            @item.DurationMonths Month(s)
+                        </strong>
+
+                    </div>
+
+                    <div class="mb-2">
+
+                        <i class="fas fa-wallet text-warning me-2"></i>
+
+                        Joining Fee:
+                        ₹@item.JoiningFee.ToString("N0")
+
+                    </div>
+
+                    <div class="mt-3">
+
+                        <small class="text-muted">
+
+                            @(string.IsNullOrWhiteSpace(item.Description)
+                                                    ? "No Description Available"
+                                                    : item.Description)
+
+                    </small>
+
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer bg-white border-0">
+
+                        <div class="d-grid gap-2">
+
+                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                        Context,
+                                        PermissionRepo,
+                                        "MembershipPlans"))
+                            {
+                                <button class="btn btn-warning action-btn"
+                                        onclick="loadPlan(@item.PlanId)">
+
+                                    <i class="fas fa-edit me-2"></i>
+                                    Edit
+
+                                </button>
+                            }
+
+                            @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                Context,
+                                                PermissionRepo,
+                                                "MembershipPlans"))
+                            {
+                                <a asp-action="Delete"
+                                   asp-route-id="@item.PlanId"
+                                   class="btn btn-danger action-btn"
+                                   onclick="return confirm('Delete this membership plan?')">
+
+                                    <i class="fas fa-trash me-2"></i>
+                                    Delete
+
+                                </a>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow">
+
+        <div class="card-body text-center py-5">
+
+            <i class="fas fa-box-open fa-4x text-secondary mb-3"></i>
+
+            <h4>
+                No Membership Plans Found
+            </h4>
+
+            <p class="text-muted">
+                Create your first membership plan.
+            </p>
+
+        </div>
+
+    </div>
+}
+
+<!-- EDIT MODAL -->
+
+<div class="modal fade"
+     id="editPlanModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning">
+
+                <h5 class="modal-title">
+
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Membership Plan
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body"
+                 id="editPlanContainer">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    function loadPlan(id)
+    {
+        fetch('/MembershipPlans/Edit/' + id)
+        .then(response => response.text())
+        .then(html =>
+        {
+            document.getElementById(
+                'editPlanContainer'
+            ).innerHTML = html;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    'editPlanModal'
+                )
+            ).show();
+        });
+    }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function ()
+        {
+            document
+                .querySelectorAll(
+                    'input[type="number"]'
+                )
+                .forEach(input =>
+                {
+                    input.addEventListener(
+                        "input",
+                        function ()
+                        {
+                            if (
+                                parseFloat(
+                                    this.value
+                                ) < 0
+                            )
+                            {
+                                this.value = 0;
+                            }
+                        }
+                    );
+                });
+        }
+    );
+
+</script>

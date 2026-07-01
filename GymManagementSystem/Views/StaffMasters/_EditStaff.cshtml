@@ -1,0 +1,221 @@
+@model GymManagement.Models.StaffMaster
+
+<form method="post"
+      asp-action="Update">
+
+    <input type="hidden"
+           asp-for="StaffId" />
+
+    <input type="hidden"
+           asp-for="RoleId" />
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Staff Code <small class="text-muted">(unique — biometric)</small>
+            </label>
+
+            <input asp-for="StaffCode"
+                   class="form-control text-uppercase"
+                   maxlength="20" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Staff Name
+            </label>
+
+            <input asp-for="StaffName"
+                   class="form-control"
+                   required />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Mobile Number
+            </label>
+
+            <input asp-for="MobileNo"
+                   class="form-control"
+                   required />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Email
+            </label>
+
+            <input asp-for="Email"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Gender
+            </label>
+
+            <select asp-for="Gender"
+                    class="form-select">
+
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Role
+            </label>
+
+            <select asp-for="RoleId"
+                    class="form-select">
+
+                @foreach (var role in ViewBag.Roles)
+                {
+                    <option value="@role.RoleId">
+                        @role.RoleName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Salary
+            </label>
+
+            <input asp-for="Salary"
+                   type="number"
+                   min="0"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Joining Date
+            </label>
+
+            <input asp-for="JoiningDate"
+                   type="date"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Status
+            </label>
+
+            <select asp-for="IsActive"
+                    class="form-select">
+
+                <option value="true">
+                    Active
+                </option>
+
+                <option value="false">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-12 mb-3">
+
+            <label class="form-label">
+                Trainer Experience Areas
+            </label>
+
+            @{
+                var selectedAreas = (Model.Specializations ?? "")
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+
+            <div class="d-flex flex-wrap gap-3">
+                @foreach (var interest in GymManagement.Helpers.TrainerInterestOptions.All)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SpecializationOptions" value="@interest" id="edit_spec_@interest.Replace(" ", "")" @(selectedAreas.Contains(interest) ? "checked" : null) />
+                        <label class="form-check-label" for="edit_spec_@interest.Replace(" ", "")">@interest</label>
+                    </div>
+                }
+            </div>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Experience (Years)
+            </label>
+
+            <input asp-for="ExperienceYears"
+                   type="number"
+                   min="0"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Bank Name</label>
+            <input asp-for="BankName" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Bank Account No</label>
+            <input asp-for="BankAccountNo" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">IFSC Code</label>
+            <input asp-for="IfscCode" class="form-control text-uppercase" maxlength="20" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+
+            <label class="form-label">
+                Address
+            </label>
+
+            <textarea asp-for="Address"
+                      rows="3"
+                      class="form-control">
+            </textarea>
+
+        </div>
+
+        <div class="col-md-12">
+
+            <button type="submit"
+                    class="btn btn-success">
+
+                <i class="fas fa-save me-2"></i>
+                Update Staff
+
+            </button>
+
+        </div>
+
+    </div>
+
+</form>

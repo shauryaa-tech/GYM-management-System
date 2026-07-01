@@ -1,0 +1,226 @@
+@model GymManagement.Models.Lead
+
+<form asp-action="Update"
+      method="post">
+
+    <input asp-for="LeadId"
+           type="hidden" />
+
+    <input asp-for="LeadCode"
+           type="hidden" />
+
+    <input asp-for="IsConverted"
+           type="hidden" />
+
+    <input asp-for="IsActive"
+           type="hidden" />
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Lead Name
+            </label>
+
+            <input asp-for="LeadName"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Mobile Number
+            </label>
+
+            <input asp-for="MobileNo"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Alternate Mobile
+            </label>
+
+            <input asp-for="AlternateMobile"
+                   class="form-control" />
+
+        </div>
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Email
+            </label>
+
+            <input asp-for="Email"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Gender
+            </label>
+
+            <select asp-for="Gender"
+                    class="form-select">
+
+                <option value="">Select Gender</option>
+
+                <option value="Male">Male</option>
+
+                <option value="Female">Female</option>
+
+                <option value="Other">Other</option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Interested In
+            </label>
+
+            <input asp-for="InterestedIn"
+                   class="form-control" />
+
+        </div>
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Lead Source
+            </label>
+
+            <select asp-for="LeadSourceId"
+                    class="form-select">
+
+                <option value="">
+                    Select Lead Source
+                </option>
+
+                @foreach (var source in ViewBag.LeadSources)
+                {
+                    <option value="@source.LeadSourceId">
+                        @source.SourceName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Assigned Staff
+            </label>
+
+            <select asp-for="AssignedTo"
+                    class="form-select">
+
+                <option value="">
+                    Select Staff
+                </option>
+
+                @foreach (var staff in ViewBag.Staffs)
+                {
+                    <option value="@staff.StaffId">
+                        @staff.StaffName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Status
+            </label>
+
+            <select asp-for="Status"
+                    class="form-select">
+
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Interested">Interested</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="Converted">Converted</option>
+                <option value="Lost">Lost</option>
+
+            </select>
+
+        </div>
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Budget
+            </label>
+
+            <input asp-for="Budget"
+                   class="form-control"
+                   type="number"
+                   step="0.01" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+
+            <label class="form-label">
+                Follow Up Date
+            </label>
+
+            <input asp-for="FollowUpDate"
+                   class="form-control"
+                   type="date" />
+
+        </div>
+
+        <div class="col-md-4 mb-3">
+        </div>
+
+        <div class="col-md-12 mb-3">
+
+            <label class="form-label">
+                Address
+            </label>
+
+            <textarea asp-for="Address"
+                      class="form-control"
+                      rows="2"></textarea>
+
+        </div>
+        <div class="col-md-12 mb-3">
+
+            <label class="form-label">
+                Remarks
+            </label>
+
+            <textarea asp-for="Remarks"
+                      class="form-control"
+                      rows="3"></textarea>
+
+        </div>
+
+    </div>
+
+    <div class="text-end">
+
+        <button type="submit"
+                class="btn btn-success">
+
+            <i class="fas fa-save me-2"></i>
+
+            Update Lead
+
+        </button>
+
+    </div>
+
+</form>

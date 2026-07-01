@@ -1,0 +1,473 @@
+@model GymManagement.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var inactiveMembers = Model.TotalMembers - Model.ActiveMembers;
+    var activePct = Model.TotalMembers > 0 ? (Model.ActiveMembers * 100.0 / Model.TotalMembers) : 0;
+    var dateLabel = Model.SelectedDate.ToString("dddd, dd MMMM yyyy");
+    var dateParam = Model.SelectedDate.ToString("yyyy-MM-dd");
+    var monthLabel = Model.SelectedDate.ToString("MMMM yyyy");
+    var dayShort = Model.SelectedDate.ToString("dd MMM yyyy");
+}
+
+<link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+
+<div class="container-fluid dash-page">
+
+    <!-- HERO -->
+    <div class="dash-hero">
+        <div class="dash-hero-content">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h1>Welcome back, @(Model.FullName ?? "Admin") 👋</h1>
+                    @if (Model.IsSelectedToday)
+                    {
+                        <p>Aaj ka gym overview — members, revenue, attendance aur alerts ek jagah.</p>
+                    }
+                    else
+                    {
+                        <p><span class="dash-past-badge">Past day view</span> @dayShort ka overview — revenue, attendance aur stats.</p>
+                    }
+                </div>
+                <form method="get" asp-action="Index" class="dash-date-picker" id="dashDateForm">
+                    <button type="button" class="dash-date-nav" id="dashDatePrev" title="Previous day" aria-label="Previous day">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <label class="dash-date-label" title="Select date">
+                        <i class="far fa-calendar-alt"></i>
+                        <input type="date"
+                               name="date"
+                               id="dashDateInput"
+                               class="dash-date-input"
+                               value="@dateParam"
+                               max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span class="dash-date-text">@dateLabel</span>
+                    </label>
+                    <button type="button" class="dash-date-nav" id="dashDateNext" title="Next day" aria-label="Next day" @(Model.IsSelectedToday ? "disabled" : "")>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    @if (!Model.IsSelectedToday)
+                    {
+                        <a href="/Dashboard" class="dash-date-today">Today</a>
+                    }
+                </form>
+            </div>
+            <div class="dash-quick-actions">
+                <a href="/Attendance/Index" class="dash-quick-btn"><i class="fas fa-calendar-check"></i> Mark Attendance</a>
+                <a href="/Payments/Index" class="dash-quick-btn"><i class="fas fa-credit-card"></i> Collect Payment</a>
+                <a href="/Leads/Index" class="dash-quick-btn"><i class="fas fa-bullseye"></i> Leads</a>
+                <a href="/MemberMasters/Index" class="dash-quick-btn"><i class="fas fa-user-plus"></i> Add Member</a>
+                <a href="/Reports/Collections" class="dash-quick-btn"><i class="fas fa-chart-pie"></i> Reports</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI ROW 1 — Money & Members -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--purple">
+                <div class="dash-kpi-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                <div class="dash-kpi-label">@(Model.IsSelectedToday ? "Today's Revenue" : "Day Revenue")</div>
+                <div class="dash-kpi-value">₹@Model.TodayRevenue.ToString("N0")</div>
+                <div class="dash-kpi-sub">@(Model.IsSelectedToday ? "Live collections aaj" : $"Collections on {dayShort}")</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--indigo">
+                <div class="dash-kpi-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="dash-kpi-label">This Month</div>
+                <div class="dash-kpi-value">₹@Model.MonthRevenue.ToString("N0")</div>
+                <div class="dash-kpi-sub">@monthLabel revenue</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--blue">
+                <div class="dash-kpi-icon"><i class="fas fa-users"></i></div>
+                <div class="dash-kpi-label">Total Members</div>
+                <div class="dash-kpi-value">@Model.TotalMembers</div>
+                <div class="dash-kpi-sub"><span class="up">@Model.ActiveMembers active</span> · @inactiveMembers inactive</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--green">
+                <div class="dash-kpi-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="dash-kpi-label">@(Model.IsSelectedToday ? "Today's Attendance" : "Day Attendance")</div>
+                <div class="dash-kpi-value">@Model.TodayAttendance</div>
+                <div class="dash-kpi-sub">Member check-ins @(Model.IsSelectedToday ? "aaj" : $"on {dayShort}")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI ROW 2 — Alerts & Staff -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--rose">
+                <div class="dash-kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="dash-kpi-label">Outstanding Fees</div>
+                <div class="dash-kpi-value">₹@Model.TotalOutstanding.ToString("N0")</div>
+                <div class="dash-kpi-sub">@Model.OutstandingCount pending payments</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--amber">
+                <div class="dash-kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+                <div class="dash-kpi-label">Expiring Soon</div>
+                <div class="dash-kpi-value">@(Model.ExpiringSoonCount + Model.ExpiredCount)</div>
+                <div class="dash-kpi-sub">@Model.ExpiredCount expired · @Model.ExpiringSoonCount next 7 days</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--cyan">
+                <div class="dash-kpi-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="dash-kpi-label">Leads Pipeline</div>
+                <div class="dash-kpi-value">@Model.PendingLeads</div>
+                <div class="dash-kpi-sub">@Model.NewLeadsToday new @(Model.IsSelectedToday ? "today" : "that day") · @Model.FollowUpDue follow-up due</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="dash-kpi dash-kpi--orange">
+                <div class="dash-kpi-icon"><i class="fas fa-user-tie"></i></div>
+                <div class="dash-kpi-label">@(Model.IsSelectedToday ? "Staff Today" : "Staff That Day")</div>
+                <div class="dash-kpi-value">@Model.StaffAttendanceToday / @Model.ActiveStaff</div>
+                <div class="dash-kpi-sub">@Model.TotalStaff total staff · present @(Model.IsSelectedToday ? "today" : dayShort)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="row g-3 mb-3 dash-charts-row align-items-start">
+        <div class="col-lg-8">
+            <div class="dash-panel dash-panel--chart">
+                <div class="dash-panel-head">
+                    <div>
+                        <h5 class="dash-panel-title"><i class="fas fa-chart-area text-primary me-2"></i>Revenue Trend</h5>
+                        <p class="dash-panel-sub">Last 6 months — payments + membership collections</p>
+                    </div>
+                    <span class="dash-panel-badge">₹@Model.MonthRevenue.ToString("N0") this month</span>
+                </div>
+                <div class="dash-chart-wrap">
+                    <canvas id="dashRevenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 d-flex flex-column gap-3">
+            <div class="dash-panel dash-panel--chart">
+                <div class="dash-panel-head">
+                    <div>
+                        <h5 class="dash-panel-title"><i class="fas fa-chart-pie text-success me-2"></i>Member Status</h5>
+                        <p class="dash-panel-sub">@activePct.ToString("0.0")% active rate</p>
+                    </div>
+                </div>
+                <div class="dash-chart-wrap dash-chart-wrap--sm">
+                    <canvas id="dashMemberChart"></canvas>
+                </div>
+            </div>
+            <div class="dash-panel dash-panel--chart">
+                <div class="dash-panel-head">
+                    <div>
+                        <h5 class="dash-panel-title"><i class="fas fa-wallet text-warning me-2"></i>Payment Modes</h5>
+                        <p class="dash-panel-sub">Last 30 days breakdown</p>
+                    </div>
+                </div>
+                <div class="dash-chart-wrap dash-chart-wrap--sm">
+                    @if (Model.PaymentModes.Any())
+                    {
+                        <canvas id="dashPaymentChart"></canvas>
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><i class="fas fa-receipt"></i>No payment data yet</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="row g-3 mb-3 dash-charts-row align-items-start">
+        <div class="col-lg-7">
+            <div class="dash-panel dash-panel--chart">
+                <div class="dash-panel-head">
+                    <div>
+                        <h5 class="dash-panel-title"><i class="fas fa-chart-bar text-info me-2"></i>Weekly Attendance</h5>
+                        <p class="dash-panel-sub">Members vs Staff — last 7 days</p>
+                    </div>
+                    <span class="dash-panel-badge">@Model.TodayAttendance members on @Model.SelectedDate.ToString("dd MMM")</span>
+                </div>
+                <div class="dash-chart-wrap">
+                    <canvas id="dashAttendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="dash-panel dash-panel--chart">
+                <div class="dash-panel-head">
+                    <div>
+                        <h5 class="dash-panel-title"><i class="fas fa-wave-square text-primary me-2"></i>Member Check-in Trend</h5>
+                        <p class="dash-panel-sub">Daily footfall last 7 days</p>
+                    </div>
+                </div>
+                <div class="dash-chart-wrap">
+                    <canvas id="dashTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLES ROW -->
+    <div class="row g-3">
+        <!-- Expiring Memberships -->
+        <div class="col-lg-6">
+            <div class="dash-panel dash-panel--fill">
+                <div class="dash-panel-head">
+                    <h5 class="dash-panel-title"><i class="fas fa-hourglass-end text-warning me-2"></i>Expiring Memberships</h5>
+                    <a href="/Reports/MembershipExpiry" class="dash-link-all">View all →</a>
+                </div>
+                @if (Model.ExpiringMembers.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Plan</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in Model.ExpiringMembers)
+                                {
+                                    var badge = m.DaysLeft < 0 ? "dash-badge--danger" : m.DaysLeft <= 3 ? "dash-badge--warn" : "dash-badge--info";
+                                    var label = m.DaysLeft < 0 ? $"{Math.Abs(m.DaysLeft)}d overdue" : m.DaysLeft == 0 ? "Today" : $"{m.DaysLeft}d left";
+                                    <tr>
+                                        <td class="fw-semibold">@m.MemberName</td>
+                                        <td>@(m.PlanName ?? "—")</td>
+                                        <td>@(m.PlanEndDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                        <td><span class="dash-badge @badge">@label</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty"><i class="fas fa-check-circle"></i>No expiring memberships in next 7 days</div>
+                }
+            </div>
+        </div>
+
+        <!-- Outstanding Fees -->
+        <div class="col-lg-6">
+            <div class="dash-panel dash-panel--fill">
+                <div class="dash-panel-head">
+                    <h5 class="dash-panel-title"><i class="fas fa-money-bill-wave text-danger me-2"></i>Outstanding Fees</h5>
+                    <a href="/Reports/Outstanding" class="dash-link-all">View all →</a>
+                </div>
+                @if (Model.OutstandingRows.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Plan</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in Model.OutstandingRows)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@o.MemberName</td>
+                                        <td>@(o.PlanName ?? "—")</td>
+                                        <td class="fw-bold text-danger">₹@o.Amount.ToString("N0")</td>
+                                        <td><span class="dash-badge dash-badge--warn">@o.PaymentStatus</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty"><i class="fas fa-check-circle"></i>All fees collected — no outstanding!</div>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Members -->
+        <div class="col-lg-4">
+            <div class="dash-panel dash-panel--fill">
+                <div class="dash-panel-head">
+                    <h5 class="dash-panel-title"><i class="fas fa-user-plus text-info me-2"></i>Recent Members</h5>
+                    <a href="/Members/Index" class="dash-link-all">View all →</a>
+                </div>
+                @if (Model.RecentMembers.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="dash-table">
+                            <thead><tr><th>Name</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var m in Model.RecentMembers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@m.MemberName</div>
+                                            @if (!string.IsNullOrEmpty(m.MemberCode))
+                                            {
+                                                <small class="text-muted">@m.MemberCode</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="dash-badge @(m.Status == "Active" ? "dash-badge--active" : "dash-badge--inactive")">
+                                                @m.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty"><i class="fas fa-users"></i>No members yet</div>
+                }
+                @if (Model.NewMembersThisMonth > 0)
+                {
+                    <p class="text-muted small mt-2 mb-0 px-1"><i class="fas fa-arrow-up text-success me-1"></i>@Model.NewMembersThisMonth new members this month</p>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Leads -->
+        <div class="col-lg-4">
+            <div class="dash-panel dash-panel--fill">
+                <div class="dash-panel-head">
+                    <h5 class="dash-panel-title"><i class="fas fa-bullseye text-primary me-2"></i>Recent Leads</h5>
+                    <a href="/Leads/Index" class="dash-link-all">View all →</a>
+                </div>
+                @if (Model.RecentLeads.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="dash-table">
+                            <thead><tr><th>Name</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var l in Model.RecentLeads)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@l.LeadName</div>
+                                            @if (!string.IsNullOrEmpty(l.MobileNo))
+                                            {
+                                                <small class="text-muted">@l.MobileNo</small>
+                                            }
+                                        </td>
+                                        <td><span class="dash-badge dash-badge--info">@(l.Status ?? "New")</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty"><i class="fas fa-bullseye"></i>No leads yet</div>
+                }
+            </div>
+        </div>
+
+        <!-- Follow-up Due -->
+        <div class="col-lg-4">
+            <div class="dash-panel dash-panel--fill">
+                <div class="dash-panel-head">
+                    <h5 class="dash-panel-title"><i class="fas fa-bell text-danger me-2"></i>Follow-up Due</h5>
+                    <a href="/Leads/Index" class="dash-link-all">View all →</a>
+                </div>
+                @if (Model.FollowUpLeads.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="dash-table">
+                            <thead><tr><th>Lead</th><th>Due Date</th></tr></thead>
+                            <tbody>
+                                @foreach (var l in Model.FollowUpLeads)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@l.LeadName</div>
+                                            @if (!string.IsNullOrEmpty(l.MobileNo))
+                                            {
+                                                <small class="text-muted">@l.MobileNo</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="dash-badge dash-badge--danger">
+                                                @(l.FollowUpDate?.ToString("dd MMM") ?? "—")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty"><i class="fas fa-check-circle"></i>No follow-ups due today</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ShowStaffBoard)
+    {
+        <div class="dash-staff-board-section">
+            <div class="dash-panel dash-panel--flush">
+                @{
+                    ViewData["ReturnUrl"] = Model.IsSelectedToday
+                        ? "/Dashboard"
+                        : $"/Dashboard?date={dateParam}";
+                    ViewData["ShowManageLink"] = true;
+                    ViewData["BoardDate"] = Model.SelectedDate;
+                    ViewData["AllowQuickActions"] = Model.IsSelectedToday;
+                }
+                <partial name="_StaffTodayBoard" model="Model.StaffTodayBoard" />
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var chartConfig = {
+                months: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months)),
+                revenues: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Revenues)),
+                attendanceDates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AttendanceDates)),
+                memberAttendance: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MemberAttendance)),
+                trainerAttendance: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TrainerAttendance)),
+                activeMembers: @Model.ActiveMembers,
+                totalMembers: @Model.TotalMembers,
+                paymentModes: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PaymentModes)),
+                paymentModeAmounts: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PaymentModeAmounts))
+            };
+
+            initDashboardDatePicker();
+
+            function bootCharts(attempt) {
+                if (typeof Chart !== 'undefined') {
+                    initDashboardCharts(chartConfig);
+                    return;
+                }
+                if ((attempt || 0) < 60) {
+                    setTimeout(function () { bootCharts((attempt || 0) + 1); }, 100);
+                }
+            }
+            bootCharts(0);
+        })();
+    </script>
+}

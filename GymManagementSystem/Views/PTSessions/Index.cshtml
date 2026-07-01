@@ -1,0 +1,284 @@
+@model List<GymManagement.Models.PTSession>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "PT Sessions";
+
+    int totalSessions = Model.Count;
+    int scheduledSessions = Model.Count(x => x.Status == "Scheduled");
+    int completedSessions = Model.Count(x => x.Status == "Completed");
+    int cancelledSessions = Model.Count(x => x.Status == "Cancelled");
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">PT Sessions</h2>
+            <p class="mb-0">Manage personal training sessions</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "PTSessions" })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+                    Context,
+                    PermissionRepo,
+                    "PTSessions"))
+            {
+                <button class="btn btn-light btn-lg"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#sessionForm">
+
+                    <i class="fas fa-plus me-2"></i>
+                    Add Session
+
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Sessions</h6>
+                <h2>@totalSessions</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>Scheduled</h6>
+                <h2>@scheduledSessions</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Completed</h6>
+                <h2>@completedSessions</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Cancelled</h6>
+                <h2>@cancelledSessions</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="sessionForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New PT Session</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>Member</label>
+                        <select name="MemberId" class="form-select" required>
+                            <option value="">Select Member</option>
+                            @foreach (var member in ViewBag.Members)
+                            {
+                                <option value="@member.MemberId">@member.MemberCode - @member.MemberName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Trainer</label>
+                        <select name="TrainerId" class="form-select" required>
+                            <option value="">Select Trainer</option>
+                            @foreach (var trainer in ViewBag.Trainers)
+                            {
+                                <option value="@trainer.StaffId">@trainer.StaffName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Session Date</label>
+                        <input type="date" name="SessionDate" class="form-control" required />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Status</label>
+                        <select name="Status" class="form-select">
+                            <option value="Scheduled" selected>Scheduled</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Start Time</label>
+                        <input type="time" name="StartTime" class="form-control" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>End Time</label>
+                        <input type="time" name="EndTime" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Remarks</label>
+                        <input type="text" name="Remarks" class="form-control" placeholder="Optional remarks" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Session
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search Member / Trainer..." />
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-primary">Search</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Session List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member</th>
+                        <th>Trainer</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th width="180">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.MemberCode</strong><br />
+                                    <small>@item.MemberName</small>
+                                </td>
+                                <td>@item.TrainerName</td>
+                                <td>@item.SessionDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    @(item.StartTime?.ToString(@"hh\:mm")) - @(item.EndTime?.ToString(@"hh\:mm"))
+                                </td>
+                                <td>
+                                    @if (item.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                    else if (item.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">Scheduled</span>
+                                    }
+                                </td>
+                                <td>@item.Remarks</td>
+                                <td>
+                                    @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                            Context,
+                                            PermissionRepo,
+                                            "PTSessions"))
+                                    {
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="loadSession(@item.SessionId)">
+
+                                            Edit
+
+                                        </button>
+                                    }
+                                    @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                            Context,
+                                            PermissionRepo,
+                                            "PTSessions"))
+                                    {
+                                        <a asp-action="Delete"
+                                           asp-route-id="@item.SessionId"
+                                           class="btn btn-outline-danger btn-sm"
+                                           onclick="return confirm('Delete this PT session permanently?')">
+
+                                            Delete
+
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No PT Sessions Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSessionModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit PT Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editSessionContainer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadSession(id) {
+        fetch('/PTSessions/Edit/' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('editSessionContainer').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('editSessionModal')).show();
+        });
+    }
+</script>

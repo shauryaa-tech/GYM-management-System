@@ -1,0 +1,457 @@
+﻿@model List<GymManagement.Models.MemberMaster>
+
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Members";
+
+    int totalMembers = Model.Count;
+
+    int activeMembers =
+        Model.Count(x => x.Status == "Active");
+
+    int inactiveMembers =
+        Model.Count(x => x.Status != "Active");
+
+    int assignedMembers =
+        Model.Count(x => !string.IsNullOrWhiteSpace(x.TrainerName));
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-0">
+
+            Members
+
+        </h2>
+
+        <small class="text-muted">
+
+            View Members & Assigned Trainers
+
+        </small>
+
+    </div>
+
+    @await Component.InvokeAsync("ExportImport", new { module = "Members" })
+
+</div>
+<div class="row mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card shadow border-0">
+
+            <div class="card-body">
+
+                <h6>Total Members</h6>
+
+                <h2 class="text-primary">
+
+                    @totalMembers
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow border-0">
+
+            <div class="card-body">
+
+                <h6>Active</h6>
+
+                <h2 class="text-success">
+
+                    @activeMembers
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow border-0">
+
+            <div class="card-body">
+
+                <h6>Inactive</h6>
+
+                <h2 class="text-danger">
+
+                    @inactiveMembers
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card shadow border-0">
+
+            <div class="card-body">
+
+                <h6>Assigned</h6>
+
+                <h2 class="text-warning">
+
+                    @assignedMembers
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search Member..." />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <select name="trainer"
+                            class="form-select">
+
+                        <option value="">
+                            All Trainers
+                        </option>
+
+                        @foreach (var trainer in ViewBag.TrainerList)
+                        {
+                            <option value="@trainer.StaffName">
+
+                                @trainer.StaffName
+
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <select name="plan"
+                            class="form-select">
+
+                        <option value="">
+                            All Plans
+                        </option>
+
+                        @foreach (var plan in ViewBag.PlanList)
+                        {
+                            <option value="@plan.PlanName">
+
+                                @plan.PlanName
+
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="Active">
+                            Active
+                        </option>
+
+                        <option value="Inactive">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <button class="btn btn-primary w-100">
+
+                        Search
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div class="card shadow border-0">
+
+    <div class="card-header bg-primary text-white">
+
+        <h5 class="mb-0">
+
+            Member List
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Code</th>
+
+                        <th>Member</th>
+
+                        <th>Mobile</th>
+
+                        <th>Trainer</th>
+
+                        <th>Plan</th>
+
+                        <th>Join Date</th>
+
+                        <th>Status</th>
+
+                        <th width="120">Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <td>
+
+                                    <strong>
+
+                                        @item.MemberCode
+
+                                    </strong>
+
+                                </td>
+
+                                <td>
+
+                                    @item.MemberName
+
+                                </td>
+
+                                <td>
+
+                                    @item.MobileNo
+
+                                </td>
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.TrainerName))
+                                    {
+                                        <span class="badge bg-info text-dark">
+
+                                            @item.TrainerName
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+
+                                            Not Assigned
+
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.PlanName))
+                                    {
+                                        <span class="badge bg-primary">
+
+                                            @item.PlanName
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+
+                                            No Plan
+
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    @item.JoinDate.ToString("dd-MMM-yyyy")
+
+                                </td>
+
+                                <td>
+
+                                    @if (item.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">
+
+                                            Active
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+
+                                            @item.Status
+
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    <button class="btn btn-info btn-sm"
+                                            onclick="loadMember(@item.MemberId)">
+
+                                        View
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+
+                            <td colspan="7"
+                                class="text-center text-muted">
+
+                                No Members Found
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+            <div class="modal fade"
+                 id="memberModal">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header bg-primary text-white">
+
+                            <h5>
+
+                                Member Details
+
+                            </h5>
+
+                            <button class="btn-close"
+                                    data-bs-dismiss="modal">
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body"
+                             id="memberContainer">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    function loadMember(id)
+    {
+        fetch('/Members/Details/' + id)
+
+        .then(response => response.text())
+
+        .then(html =>
+        {
+            document.getElementById(
+                "memberContainer"
+            ).innerHTML = html;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    "memberModal"
+                )
+            ).show();
+        });
+    }
+
+</script>

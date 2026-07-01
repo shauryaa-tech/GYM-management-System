@@ -1,0 +1,53 @@
+@* Floating AI assistant — bottom right *@
+<link rel="stylesheet" href="~/css/ai-agent.css" asp-append-version="true" />
+
+<div id="aiAgentRoot" class="ai-agent-root" aria-live="polite">
+    <button type="button" id="aiAgentLauncher" class="ai-agent-launcher" aria-label="Open CloudMex AI assistant" title="CloudMex AI">
+        <div class="ai-face">
+            <div class="ai-eyes">
+                <div class="ai-eye"><span class="ai-pupil"></span><span class="ai-lid"></span></div>
+                <div class="ai-eye"><span class="ai-pupil"></span><span class="ai-lid"></span></div>
+            </div>
+            <div class="ai-mouth ai-mouth--smile"></div>
+        </div>
+    </button>
+
+    <div id="aiAgentPanel" class="ai-agent-panel" role="dialog" aria-label="CloudMex AI chat">
+        <div class="ai-panel-header">
+            <div class="ai-panel-face-wrap">
+                <div class="ai-face" id="aiPanelFace">
+                    <div class="ai-eyes">
+                        <div class="ai-eye"><span class="ai-pupil"></span><span class="ai-lid"></span></div>
+                        <div class="ai-eye"><span class="ai-pupil"></span><span class="ai-lid"></span></div>
+                    </div>
+                    <div class="ai-mouth ai-mouth--smile"></div>
+                </div>
+            </div>
+            <div class="ai-panel-title">
+                <h6>CloudMex AI</h6>
+                <span><span class="ai-status-dot"></span>Online · Gym assistant</span>
+            </div>
+            <button type="button" id="aiAgentClose" class="ai-panel-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="aiAgentMessages" class="ai-panel-messages"></div>
+
+        <div class="ai-quick-chips">
+            <button type="button" class="ai-chip" data-msg="Payment kaise karein?">Payments</button>
+            <button type="button" class="ai-chip" data-msg="WhatsApp bot setup">WhatsApp</button>
+            <button type="button" class="ai-chip" data-msg="Attendance report">Reports</button>
+            <button type="button" class="ai-chip" data-msg="Help">Help</button>
+        </div>
+
+        <div class="ai-panel-input">
+            <input type="text" id="aiAgentInput" placeholder="Kuch poochho..." autocomplete="off" maxlength="500" />
+            <button type="button" id="aiAgentSend" class="ai-panel-send" aria-label="Send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/ai-agent.js" asp-append-version="true"></script>

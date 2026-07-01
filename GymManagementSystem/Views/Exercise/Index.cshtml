@@ -1,0 +1,328 @@
+﻿@model List<GymManagement.Models.ExerciseMaster>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+
+@{
+    ViewData["Title"] = "Exercise Master";
+
+int totalExercises = Model.Count;
+    int activeExercises = Model.Count(x => x.Status);
+    int inactiveExercises = Model.Count(x => !x.Status);
+
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="fw-bold mb-0">Exercise Master</h2>
+        <small class="text-muted">
+            Manage gym exercises and workout library
+        </small>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+        @await Component.InvokeAsync("ExportImport", new { module = "ExerciseMaster", allowImport = true })
+        @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+            Context,
+            PermissionRepo,
+            "ExerciseMaster"))
+        {
+            <a asp-action="Save"
+               class="btn btn-primary">
+
+                <i class="fas fa-plus"></i>
+                Add Exercise
+
+            </a>
+        }
+    </div>
+
+</div>
+
+<div class="row mb-4">
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+                    Total Exercises
+                </h6>
+
+                <h2 class="fw-bold text-primary">
+                    @totalExercises
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+                    Active
+                </h6>
+
+                <h2 class="fw-bold text-success">
+                    @activeExercises
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+                    Inactive
+                </h6>
+
+                <h2 class="fw-bold text-danger">
+                    @inactiveExercises
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row">
+
+                <div class="col-md-5">
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search Exercise..." />
+                </div>
+
+                <div class="col-md-3">
+
+                    <select name="status" class="form-select">
+
+                        <option value="">All Status</option>
+
+                        <option value="true">Active</option>
+
+                        <option value="false">Inactive</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button class="btn btn-primary">
+                        Search
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        Reset
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="card shadow border-0">
+
+    <div class="card-header bg-primary text-white">
+
+        <h5 class="mb-0">
+            Exercise List
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Exercise</th>
+                        <th>Muscle Group</th>
+                        <th>Difficulty</th>
+                        <th>Calories</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th width="180">Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @item.ExerciseName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @item.MuscleGroup
+                            </td>
+
+                            <td>
+                                @item.DifficultyLevel
+                            </td>
+
+                            <td>
+                                @item.CaloriesBurn
+                            </td>
+
+                            <td>
+                                @item.Description
+                            </td>
+
+                            <td>
+
+                                @if (item.Status)
+                                {
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Inactive
+                                    </span>
+                                }
+
+                            </td>
+                            <td>
+
+                                @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                                            Context,
+                                                            PermissionRepo,
+                                                            "ExerciseMaster"))
+                                {
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="loadExercise(@item.ExerciseId)">
+
+                                        Edit
+
+                                    </button>
+                                }
+
+                                @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                            Context,
+                                                            PermissionRepo,
+                                                            "ExerciseMaster"))
+                                {
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.ExerciseId"
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Delete Exercise?')">
+
+                                        Delete
+
+                                    </a>
+                                }
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+            <!-- EDIT MODAL -->
+
+            <div class="modal fade"
+                 id="editExerciseModal">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header bg-warning">
+
+                            <h5 class="modal-title">
+
+                                Edit Exercise
+
+                            </h5>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal">
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body"
+                             id="editExerciseContainer">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+        function loadExercise(id)
+        {
+            fetch('/Exercise/Edit/' + id)
+            .then(response => response.text())
+            .then(html =>
+            {
+                document.getElementById(
+                    'editExerciseContainer'
+                ).innerHTML = html;
+
+                new bootstrap.Modal(
+                    document.getElementById(
+                        'editExerciseModal'
+                    )
+                ).show();
+            });
+        }
+</script>

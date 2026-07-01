@@ -1,0 +1,324 @@
+﻿@model GymManagement.ViewModels.RolePermissionViewModel
+
+@{
+    ViewData["Title"] = "Role Permission";
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h3 class="mb-1">
+                        <i class="fa fa-lock me-2"></i>
+                        Role Permission
+                    </h3>
+
+                    <small>
+                        Manage Module Permissions
+                    </small>
+
+                </div>
+
+                <a asp-action="Index"
+                   asp-route-tab="roles"
+                   class="btn btn-light">
+
+                    <i class="fa fa-arrow-left"></i>
+
+                    Back
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+
+                    <label class="fw-bold">
+                        Role Name
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.Role.RoleName"
+                           readonly />
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="fw-bold">
+                        Description
+                    </label>
+
+                    <input class="form-control"
+                           value="@Model.Role.Description"
+                           readonly />
+
+                </div>
+
+            </div>
+
+            <form asp-action="SavePermission"
+                  method="post">
+
+                <input type="hidden"
+                       name="Role.RoleId"
+                       value="@Model.Role.RoleId" />
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered table-hover align-middle">
+
+                        <thead class="table-dark">
+
+                            <tr>
+                                <th style="width:280px">
+                                    Module
+                                </th>
+
+                                <th class="text-center">
+                                    View
+                                    <br />
+                                    <input type="checkbox" id="chkViewAll" />
+                                </th>
+
+                                <th class="text-center">
+                                    Add
+                                    <br />
+                                    <input type="checkbox" id="chkAddAll" />
+                                </th>
+
+                                <th class="text-center">
+                                    Edit
+                                    <br />
+                                    <input type="checkbox" id="chkEditAll" />
+                                </th>
+
+                                <th class="text-center">
+                                    Delete
+                                    <br />
+                                    <input type="checkbox" id="chkDeleteAll" />
+                                </th>
+
+                                <th class="text-center">
+                                    Export
+                                    <br />
+                                    <input type="checkbox" id="chkExportAll" />
+                                </th>
+
+                                <th class="text-center" style="width:90px">
+                                    All
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            @for (int i = 0; i < Model.Permissions.Count; i++)
+                            {
+                                <tr>
+
+                                    <td>
+
+                                        @Model.Permissions[i].DisplayName
+
+                                        <input type="hidden"
+                                               asp-for="Permissions[i].PermissionId" />
+
+                                        <input type="hidden"
+                                               asp-for="Permissions[i].ModuleName" />
+
+                                        <input type="hidden"
+                                               asp-for="Permissions[i].DisplayName" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input class="form-check-input chkView"
+                                               asp-for="Permissions[i].CanView" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input class="form-check-input chkAdd"
+                                               asp-for="Permissions[i].CanAdd" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input class="form-check-input chkEdit"
+                                               asp-for="Permissions[i].CanEdit" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input class="form-check-input chkDelete"
+                                               asp-for="Permissions[i].CanDelete" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input class="form-check-input chkExport"
+                                               asp-for="Permissions[i].CanExport" />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <input type="checkbox"
+                                               class="form-check-input rowAll" />
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="text-end mt-4">
+
+                    <button type="submit"
+                            class="btn btn-success btn-lg">
+
+                        <i class="fa fa-save me-2"></i>
+
+                        Save Permissions
+
+                    </button>
+
+                    <a asp-action="Index"
+                       asp-route-tab="roles"
+                       class="btn btn-secondary btn-lg">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    @if (TempData["Success"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '@TempData["Success"]'
+            });
+        </script>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '@TempData["Error"]'
+            });
+        </script>
+    }
+    <script>
+
+        document.getElementById("chkViewAll").addEventListener("change", function () {
+
+            document.querySelectorAll(".chkView").forEach(x => {
+
+                x.checked = this.checked;
+
+            });
+
+        });
+
+        document.getElementById("chkAddAll").addEventListener("change", function () {
+
+            document.querySelectorAll(".chkAdd").forEach(x => {
+
+                x.checked = this.checked;
+
+            });
+
+        });
+
+        document.getElementById("chkEditAll").addEventListener("change", function () {
+
+            document.querySelectorAll(".chkEdit").forEach(x => {
+
+                x.checked = this.checked;
+
+            });
+
+        });
+
+        document.getElementById("chkDeleteAll").addEventListener("change", function () {
+
+            document.querySelectorAll(".chkDelete").forEach(x => {
+
+                x.checked = this.checked;
+
+            });
+
+        });
+
+        document.getElementById("chkExportAll").addEventListener("change", function () {
+
+            document.querySelectorAll(".chkExport").forEach(x => {
+
+                x.checked = this.checked;
+
+            });
+
+        });
+
+                document.querySelectorAll(".rowAll").forEach(function (checkbox) {
+
+            checkbox.addEventListener("change", function () {
+
+                let row = this.closest("tr");
+
+                row.querySelector(".chkView").checked = this.checked;
+
+                row.querySelector(".chkAdd").checked = this.checked;
+
+                row.querySelector(".chkEdit").checked = this.checked;
+
+                row.querySelector(".chkDelete").checked = this.checked;
+
+                row.querySelector(".chkExport").checked = this.checked;
+
+            });
+
+        });
+
+    </script>
+}

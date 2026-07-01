@@ -1,0 +1,107 @@
+@model GymManagement.ViewModels.OutstandingReportViewModel
+
+@{
+    ViewData["Title"] = "Outstanding Report";
+}
+
+<partial name="_ReportStyles" />
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Outstanding Report</h2>
+            <p class="mb-0">Pending and partial membership payments</p>
+        </div>
+        @await Component.InvokeAsync("ExportImport", new { module = "ReportOutstanding", exportAction = "ExportOutstanding" })
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Total Outstanding</h6>
+                <h2>₹ @Model.TotalOutstanding.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Pending</h6>
+                <h2>@Model.PendingCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>Partial</h6>
+                <h2>@Model.PartialCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Payment Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Outstanding</option>
+                    <!option value="Pending" @(Model.StatusFilter == "Pending" ? "selected" : null)>Pending</!option>
+                    <!option value="Partial" @(Model.StatusFilter == "Partial" ? "selected" : null)>Partial</!option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Member Code</th>
+                        <th>Member Name</th>
+                        <th>Mobile</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No outstanding payments found.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var row in Model.Rows)
+                    {
+                        var badgeClass = row.PaymentStatus == "Pending" ? "bg-danger" : "bg-warning text-dark";
+                        <tr>
+                            <td>@row.MemberCode</td>
+                            <td>@row.MemberName</td>
+                            <td>@row.MobileNo</td>
+                            <td>@row.PlanName</td>
+                            <td>₹ @row.Amount.ToString("N2")</td>
+                            <td><span class="badge @badgeClass">@row.PaymentStatus</span></td>
+                            <td>@row.EndDate.ToString("dd-MMM-yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

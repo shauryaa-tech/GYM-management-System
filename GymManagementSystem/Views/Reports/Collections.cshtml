@@ -1,0 +1,125 @@
+@model GymManagement.ViewModels.CollectionReportViewModel
+
+@{
+    ViewData["Title"] = "Collections Report";
+}
+
+<partial name="_ReportStyles" />
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Collections Report</h2>
+            <p class="mb-0">Payment collections summary</p>
+        </div>
+        @await Component.InvokeAsync("ExportImport", new { module = "ReportCollections", exportAction = "ExportCollections" })
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Collected</h6>
+                <h2>₹ @Model.TotalAmount.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Cash</h6>
+                <h2>₹ @Model.CashTotal.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>UPI</h6>
+                <h2>₹ @Model.UpiTotal.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Card</h6>
+                <h2>₹ @Model.CardTotal.ToString("N0")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">From Date</label>
+                <input type="date" name="fromDate" class="form-control"
+                       value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">To Date</label>
+                <input type="date" name="toDate" class="form-control"
+                       value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Payment Mode</label>
+                <select name="mode" class="form-select">
+                    <option value="">All Modes</option>
+                    <option value="Cash" selected="@(Model.PaymentMode == "Cash")">Cash</option>
+                    <option value="UPI" selected="@(Model.PaymentMode == "UPI")">UPI</option>
+                    <option value="Card" selected="@(Model.PaymentMode == "Card")">Card</option>
+                    <option value="Bank" selected="@(Model.PaymentMode == "Bank")">Bank</option>
+                    <option value="Membership" selected="@(Model.PaymentMode == "Membership")">Membership</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Member Code</th>
+                        <th>Member Name</th>
+                        <th>Amount</th>
+                        <th>Mode</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No collections found for this period.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@row.PaymentDate.ToString("dd-MMM-yyyy")</td>
+                            <td>@row.MemberCode</td>
+                            <td>@row.MemberName</td>
+                            <td>₹ @row.Amount.ToString("N2")</td>
+                            <td>@row.PaymentMode</td>
+                            <td>@row.ReferenceNo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

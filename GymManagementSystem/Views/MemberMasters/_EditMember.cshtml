@@ -1,0 +1,131 @@
+﻿@model GymManagement.Models.MemberMaster
+
+<form method="post" asp-action="Edit">
+
+    <input type="hidden" asp-for="MemberId" />
+    <input type="hidden" asp-for="MemberCode" />
+
+    <div class="row">
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Member Name</label>
+            <input asp-for="MemberName" class="form-control" required />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Mobile Number</label>
+            <input asp-for="MobileNo" class="form-control" required />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Gender</label>
+            <select asp-for="Gender" class="form-select">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Membership Plan</label>
+
+            <select asp-for="PlanId" class="form-select">
+
+                <option value="">Select Plan</option>
+
+                @foreach (var plan in ViewBag.Plans)
+                {
+                    <option value="@plan.PlanId">
+                        @plan.PlanName
+                    </option>
+                }
+
+            </select>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Trainer</label>
+
+            <select asp-for="TrainerId" class="form-select">
+
+                <option value="">Select Trainer</option>
+
+                @foreach (var trainer in ViewBag.Trainers)
+                {
+                    <option value="@trainer.StaffId">
+                        @trainer.StaffName
+                    </option>
+                }
+
+            </select>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Join Date</label>
+            <input asp-for="JoinDate" type="date" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Blood Group</label>
+            <input asp-for="BloodGroup" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Height (CM)</label>
+            <input asp-for="Height" type="number" min="0" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Weight (KG)</label>
+            <input asp-for="Weight" type="number" min="0" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Status</label>
+            <select asp-for="Status" class="form-select">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Emergency Contact</label>
+            <input asp-for="EmergencyContact" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Address</label>
+            <input asp-for="Address" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Plan Start Date</label>
+            <input asp-for="PlanStartDate" type="date" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Plan End Date</label>
+            <input asp-for="PlanEndDate" type="date" class="form-control" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Remarks</label>
+            <textarea asp-for="Remarks" class="form-control" rows="3"></textarea>
+        </div>
+
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-2"></i>
+            Update Member
+        </button>
+    </div>
+  
+
+</form>

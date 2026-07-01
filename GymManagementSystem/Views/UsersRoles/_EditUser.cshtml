@@ -1,0 +1,147 @@
+@model GymManagement.Models.UserMaster
+
+<form asp-action="UpdateUser"
+      method="post"
+      enctype="multipart/form-data">
+
+    <input asp-for="UserId" type="hidden" />
+    <input asp-for="ProfilePhoto" type="hidden" />
+
+    <div class="text-center mb-3">
+
+        <img id="previewImage"
+             src="@(string.IsNullOrEmpty(Model.ProfilePhoto)
+                                 ? "/uploads/Profiles/default-user.jpg"
+                                 : Model.ProfilePhoto)"
+             class="rounded-circle border"
+             width="120"
+             height="120"
+             style="object-fit:cover;" />
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">
+            Change Profile Photo
+        </label>
+
+        <input type="file"
+               name="photo"
+               class="form-control"
+               accept="image/*"
+               onchange="previewPhoto(this)" />
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Full Name</label>
+
+            <input asp-for="FullName"
+                   class="form-control"
+                   required />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">User Name</label>
+
+            <input asp-for="UserName"
+                   class="form-control"
+                   required />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Email</label>
+
+            <input asp-for="Email"
+                   type="email"
+                   class="form-control"
+                   required />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Password (Leave blank to keep current)</label>
+
+            <input asp-for="PasswordHash"
+                   type="password"
+                   class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Role
+            </label>
+
+            <select asp-for="RoleId"
+                    class="form-select">
+
+                @foreach (var role in ViewBag.Roles)
+                {
+                    <option value="@role.RoleId">
+                        @role.RoleName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Status
+            </label>
+
+            <select asp-for="IsActive"
+                    class="form-select">
+
+                <option value="true">
+                    Active
+                </option>
+
+                <option value="false">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+    <div class="text-end">
+
+        <button class="btn btn-success">
+
+            <i class="fas fa-save me-2"></i>
+
+            Update User
+
+        </button>
+
+    </div>
+
+</form>
+
+<script>
+
+    function previewPhoto(input){
+
+        if(input.files && input.files[0]){
+
+            let reader = new FileReader();
+
+            reader.onload=function(e){
+
+                document.getElementById("previewImage").src=e.target.result;
+
+            }
+
+            reader.readAsDataURL(input.files[0]);
+
+        }
+
+    }
+
+</script>

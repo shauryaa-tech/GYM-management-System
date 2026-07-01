@@ -1,0 +1,87 @@
+@model GymManagement.Models.LeadSourceMaster
+
+<form method="post"
+      asp-action="Update">
+
+    <input type="hidden"
+           asp-for="LeadSourceId" />
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Source Code
+        </label>
+
+        <input asp-for="SourceCode"
+               class="form-control"
+               readonly />
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Source Name
+        </label>
+
+        <input asp-for="SourceName"
+               class="form-control"
+               required />
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Display Order
+        </label>
+
+        <input asp-for="DisplayOrder"
+               type="number"
+               class="form-control" />
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Description
+        </label>
+
+        <textarea asp-for="Description"
+                  rows="3"
+                  class="form-control"></textarea>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Status
+        </label>
+
+        <select asp-for="IsActive"
+                class="form-select">
+
+            <option value="true">
+                Active
+            </option>
+
+            <option value="false">
+                Inactive
+            </option>
+
+        </select>
+
+    </div>
+
+    <button type="submit"
+            class="btn btn-success">
+
+        <i class="fas fa-save me-2"></i>
+
+        Update Lead Source
+
+    </button>
+
+</form>

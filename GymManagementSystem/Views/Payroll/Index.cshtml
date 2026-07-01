@@ -1,0 +1,164 @@
+@model GymManagement.ViewModels.PayrollDashboardViewModel
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Payroll";
+    var monthNames = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.MonthNames;
+}
+
+<style>
+    .payroll-hero {
+        background: linear-gradient(135deg, #0f766e 0%, #2563eb 55%, #7c3aed 100%);
+        color: #fff;
+        border-radius: 22px;
+        padding: 28px 30px;
+        margin-bottom: 24px;
+        box-shadow: 0 16px 40px rgba(37, 99, 235, 0.22);
+    }
+    .payroll-stat {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+        transition: transform .2s;
+    }
+    .payroll-stat:hover { transform: translateY(-3px); }
+    .payroll-action {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        height: 100%;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: all .2s;
+        background: #fff;
+    }
+    .payroll-action:hover {
+        border-color: #2563eb;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+        transform: translateY(-2px);
+        color: inherit;
+    }
+    .payroll-action .icon-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+    }
+</style>
+
+<div class="payroll-hero">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-money-bill-wave me-2"></i>Payroll</h2>
+            <p class="mb-0 opacity-90">Staff salary, attendance & bank transfer — @Model.MonthLabel</p>
+        </div>
+        <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+            <select name="month" class="form-select form-select-sm" style="width:auto">
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <option value="@i" selected="@(i == Model.Month)">@monthNames[i - 1]</option>
+                }
+            </select>
+            <input type="number" name="year" class="form-control form-control-sm" value="@Model.Year" min="2020" max="2099" style="width:90px" />
+            <button class="btn btn-light btn-sm">Show</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card payroll-stat p-3">
+            <div class="text-muted small">Active Staff</div>
+            <div class="fs-3 fw-bold text-primary">@Model.ActiveStaff</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card payroll-stat p-3">
+            <div class="text-muted small">Processed (@Model.MonthLabel)</div>
+            <div class="fs-3 fw-bold text-success">@Model.ProcessedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card payroll-stat p-3">
+            <div class="text-muted small">Pending</div>
+            <div class="fs-3 fw-bold text-warning">@Model.PendingCount</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card payroll-stat p-3">
+            <div class="text-muted small">Net Paid</div>
+            <div class="fs-4 fw-bold text-dark">₹@Model.TotalNetPaid.ToString("N0")</div>
+            <small class="text-danger">Deductions: ₹@Model.TotalDeductions.ToString("N0")</small>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3">Quick Actions</h5>
+<div class="row g-3">
+    @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryProcessing"))
+    {
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="SalaryProcessing" asp-action="Index" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="payroll-action">
+                <div class="icon-wrap bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-calculator"></i></div>
+                <strong>Salary Processing</strong>
+                <p class="small text-muted mb-0">Generate & pay staff salary</p>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="SalaryProcessing" asp-action="Statement" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="payroll-action">
+                <div class="icon-wrap bg-success bg-opacity-10 text-success"><i class="fa-solid fa-table"></i></div>
+                <strong>Salary Statement</strong>
+                <p class="small text-muted mb-0">Monthly payroll sheet</p>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="SalaryProcessing" asp-action="BankStatement" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="payroll-action">
+                <div class="icon-wrap bg-info bg-opacity-10 text-info"><i class="fa-solid fa-university"></i></div>
+                <strong>Bank Statement</strong>
+                <p class="small text-muted mb-0">Bank transfer export</p>
+            </a>
+        </div>
+    }
+    @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "StaffAttendance"))
+    {
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="StaffAttendance" asp-action="Index" class="payroll-action">
+                <div class="icon-wrap bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-user-clock"></i></div>
+                <strong>Staff Attendance</strong>
+                <p class="small text-muted mb-0">Mark present / absent</p>
+            </a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="StaffAttendance" asp-action="History" class="payroll-action">
+                <div class="icon-wrap bg-secondary bg-opacity-10 text-secondary"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <strong>Attendance History</strong>
+                <p class="small text-muted mb-0">Past staff records</p>
+            </a>
+        </div>
+    }
+    @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryRuleMaster"))
+    {
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="SalaryRuleMaster" asp-action="Index" class="payroll-action">
+                <div class="icon-wrap bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-scale-balanced"></i></div>
+                <strong>Salary Rules</strong>
+                <p class="small text-muted mb-0">Deduction & shift rules</p>
+            </a>
+        </div>
+    }
+    @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "StaffMaster"))
+    {
+        <div class="col-md-4 col-lg-3">
+            <a asp-controller="StaffMasters" asp-action="Index" class="payroll-action">
+                <div class="icon-wrap bg-dark bg-opacity-10 text-dark"><i class="fa-solid fa-id-badge"></i></div>
+                <strong>Staff Master</strong>
+                <p class="small text-muted mb-0">Staff code & bank details</p>
+            </a>
+        </div>
+    }
+</div>

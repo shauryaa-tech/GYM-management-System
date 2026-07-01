@@ -1,0 +1,391 @@
+@model List<GymManagement.Models.TrainerAssignmentModel>
+
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Trainer Assignment";
+
+    int total = Model.Count;
+
+    int active = Model.Count(x => x.IsActive);
+
+    int inactive = Model.Count(x => !x.IsActive);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-0">
+            Trainer Assignment
+        </h2>
+
+        <small class="text-muted">
+            Manage Member Trainer Assignments
+        </small>
+
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+        @await Component.InvokeAsync("ExportImport", new { module = "TrainerAssignment" })
+        @if (GymManagement.Helpers.PermissionHelper.CanAdd(
+            Context,
+            PermissionRepo,
+            "TrainerAssignment"))
+        {
+            <a asp-action="Save"
+               class="btn btn-primary">
+
+                <i class="fas fa-plus"></i>
+
+                Assign Trainer
+
+            </a>
+        }
+    </div>
+
+</div>
+
+<div class="row mb-4">
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+
+                    Total Assignments
+
+                </h6>
+
+                <h2 class="fw-bold text-primary">
+
+                    @total
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+
+                    Active
+
+                </h6>
+
+                <h2 class="fw-bold text-success">
+
+                    @active
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">
+
+                    Inactive
+
+                </h6>
+
+                <h2 class="fw-bold text-danger">
+
+                    @inactive
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <form method="get">
+
+            <div class="row">
+
+                <div class="col-md-5">
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search Member / Trainer..." />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+
+                            All Status
+
+                        </option>
+
+                        <option value="true">
+
+                            Active
+
+                        </option>
+
+                        <option value="false">
+
+                            Inactive
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button class="btn btn-primary">
+
+                        Search
+
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div class="card shadow border-0">
+
+    <div class="card-header bg-primary text-white">
+
+        <h5 class="mb-0">
+
+            Trainer Assignment List
+
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Member</th>
+
+                        <th>Trainer</th>
+
+                        <th>Start Date</th>
+
+                        <th>End Date</th>
+
+                        <th>Status</th>
+
+                        <th width="180">
+
+                            Action
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+
+                            <td>
+
+                                <strong>
+
+                                    @item.MemberName
+
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                @item.TrainerName
+
+                            </td>
+
+                            <td>
+
+                                @item.StartDate.ToString("dd-MMM-yyyy")
+
+                            </td>
+
+                            <td>
+
+                                @(item.EndDate?.ToString("dd-MMM-yyyy"))
+
+                            </td>
+
+                            <td>
+
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">
+
+                                        Active
+
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+
+                                        Inactive
+
+                                    </span>
+                                }
+
+                            </td>
+
+                            <td>
+
+                                @if (GymManagement.Helpers.PermissionHelper.CanEdit(
+                                                            Context,
+                                                            PermissionRepo,
+                                                            "TrainerAssignment"))
+                                {
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="loadAssignment(@item.AssignmentId)">
+
+                                        Edit
+
+                                    </button>
+                                }
+
+                                @if (GymManagement.Helpers.PermissionHelper.CanDelete(
+                                                            Context,
+                                                            PermissionRepo,
+                                                            "TrainerAssignment"))
+                                {
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.AssignmentId"
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Delete Trainer Assignment?')">
+
+                                        Delete
+
+                                    </a>
+                                }
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal fade"
+     id="editAssignmentModal">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning">
+
+                <h5 class="modal-title">
+
+                    Edit Trainer Assignment
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body"
+                 id="editAssignmentContainer">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    function loadAssignment(id)
+    {
+        fetch('/TrainerAssignments/Edit/' + id)
+
+        .then(response => response.text())
+
+        .then(html =>
+        {
+            document.getElementById(
+                'editAssignmentContainer'
+            ).innerHTML = html;
+
+            new bootstrap.Modal(
+                document.getElementById(
+                    'editAssignmentModal'
+                )
+            ).show();
+        });
+    }
+
+</script>

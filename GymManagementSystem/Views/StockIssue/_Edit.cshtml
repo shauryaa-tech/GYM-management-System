@@ -1,0 +1,98 @@
+@model GymManagement.Models.StockIssue
+
+<form method="post" asp-action="Update" id="editIssueForm">
+    <input type="hidden" name="IssueId" value="@Model.IssueId" />
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label>Product</label>
+            <select name="ProductId" class="form-select" required id="editProductSelect">
+                <option value="">Select Product</option>
+                @foreach (var product in ViewBag.Products)
+                {
+                    if (product.ProductId == Model.ProductId)
+                    {
+                        <option value="@product.ProductId" selected data-price="@product.UnitPrice" data-stock="@product.CurrentStock">@product.ProductName (@product.Category)</option>
+                    }
+                    else
+                    {
+                        <option value="@product.ProductId" data-price="@product.UnitPrice" data-stock="@product.CurrentStock">@product.ProductName (@product.Category)</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Member (Optional)</label>
+            <select name="MemberId" class="form-select" id="editMemberSelect">
+                <option value="">Select Member</option>
+                @foreach (var member in ViewBag.Members)
+                {
+                    if (Model.MemberId.HasValue && member.MemberId == Model.MemberId)
+                    {
+                        <option value="@member.MemberId" selected data-name="@member.MemberName">@member.MemberCode - @member.MemberName</option>
+                    }
+                    else
+                    {
+                        <option value="@member.MemberId" data-name="@member.MemberName">@member.MemberCode - @member.MemberName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Issued To</label>
+            <input type="text" name="IssuedTo" class="form-control" required id="editIssuedToInput" value="@Model.IssuedTo" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Issue Date</label>
+            <input type="date" name="IssueDate" class="form-control" required value="@Model.IssueDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label>Quantity</label>
+            <input type="number" min="1" name="Quantity" class="form-control" required id="editQuantityInput" value="@Model.Quantity" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label>Amount (₹)</label>
+            <input type="number" step="0.01" min="0" name="Amount" class="form-control" id="editAmountInput" value="@Model.Amount?.ToString("0.00")" />
+        </div>
+        <div class="col-md-4 mb-3">
+            <label>Payment Mode</label>
+            <select name="PaymentMode" class="form-select">
+                <option value="">None</option>
+                @if (Model.PaymentMode == "Cash") { <option value="Cash" selected>Cash</option> } else { <option value="Cash">Cash</option> }
+                @if (Model.PaymentMode == "Card") { <option value="Card" selected>Card</option> } else { <option value="Card">Card</option> }
+                @if (Model.PaymentMode == "UPI") { <option value="UPI" selected>UPI</option> } else { <option value="UPI">UPI</option> }
+                @if (Model.PaymentMode == "Bank") { <option value="Bank" selected>Bank Transfer</option> } else { <option value="Bank">Bank Transfer</option> }
+            </select>
+        </div>
+        <div class="col-md-12 mb-3">
+            <label>Remarks</label>
+            <textarea name="Remarks" class="form-control" rows="2">@Model.Remarks</textarea>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save me-2"></i>Update Issue
+        </button>
+    </div>
+</form>
+
+<script>
+    document.getElementById('editQuantityInput').addEventListener('input', calculateEditAmount);
+    document.getElementById('editProductSelect').addEventListener('change', calculateEditAmount);
+    document.getElementById('editMemberSelect').addEventListener('change', function() {
+        var selectedOption = this.options[this.selectedIndex];
+        var name = selectedOption.getAttribute('data-name');
+        if (name) {
+            document.getElementById('editIssuedToInput').value = name;
+        }
+    });
+
+    function calculateEditAmount() {
+        var selectedOption = document.getElementById('editProductSelect').options[document.getElementById('editProductSelect').selectedIndex];
+        var price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        var qty = parseFloat(document.getElementById('editQuantityInput').value) || 0;
+        if (price > 0 && qty > 0) {
+            document.getElementById('editAmountInput').value = (qty * price).toFixed(2);
+        }
+    }
+</script>

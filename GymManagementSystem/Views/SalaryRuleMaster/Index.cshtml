@@ -1,0 +1,317 @@
+@model List<GymManagement.Models.SalaryRuleMaster>
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+@{
+    ViewData["Title"] = "Salary Rule Master";
+
+    int totalRules = Model.Count;
+    int activeRules = Model.Count(x => x.IsActive);
+    var defaultRule = Model.FirstOrDefault(x => x.IsDefault);
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#6366f1,#8b5cf6);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card { border: none; border-radius: 18px; transition: .3s; }
+    .stats-card:hover { transform: translateY(-5px); }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+    .rule-book { background: #f8fafc; border-radius: 12px; padding: 16px; border-left: 4px solid #6366f1; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Salary Rule Master</h2>
+            <p class="mb-0">Yahan se salary rules define karein — database me auto rule nahi banta</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "SalaryRuleMaster", allowImport = true })
+            @if (GymManagement.Helpers.PermissionHelper.CanAdd(Context, PermissionRepo, "SalaryRuleMaster"))
+            {
+                <button class="btn btn-light btn-lg" data-bs-toggle="collapse" data-bs-target="#ruleForm">
+                    <i class="fas fa-plus me-2"></i> Add Rule
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body"><h6>Total Rules</h6><h2>@totalRules</h2></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body"><h6>Active</h6><h2>@activeRules</h2></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>Default Rule</h6>
+                <h5 class="mb-0">@(defaultRule?.RuleName ?? "Not set")</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="ruleForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Add New Salary Rule</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-action="Save">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Rule Name</label>
+                        <input type="text" name="RuleName" class="form-control" required placeholder="e.g. Standard 26 Days" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Working Days / Month</label>
+                        <input type="number" name="WorkingDaysPerMonth" class="form-control" value="26" min="1" max="31" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Half Day Factor</label>
+                        <input type="number" name="HalfDayDeductionFactor" class="form-control" value="0.5" step="0.01" min="0" max="1" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Late Grace (min)</label>
+                        <input type="number" name="LateGraceMinutes" class="form-control" value="15" min="0" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Shift Start</label>
+                        <input type="time" name="ShiftStartTime" class="form-control" value="09:00" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Shift Over (End)</label>
+                        <input type="time" name="ShiftEndTime" class="form-control" value="18:00" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Early Leave Grace (min)</label>
+                        <input type="number" name="EarlyLeaveGraceMinutes" class="form-control" value="0" min="0" />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="IsDefault" value="true" class="form-check-input" id="addIsDefault" />
+                            <label class="form-check-label" for="addIsDefault">Default</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="AbsentDeductionPerDay" value="true" class="form-check-input" checked id="addAbsent" />
+                            <label class="form-check-label" for="addAbsent">Absent par per-day deduction</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="LeaveIsPaid" value="true" class="form-check-input" checked id="addLeavePaid" />
+                            <label class="form-check-label" for="addLeavePaid">Leave paid (OFF = unpaid leave par deduction)</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="LateCountsAsHalfDay" value="true" class="form-check-input" checked id="addLateHalf" />
+                            <label class="form-check-label" for="addLateHalf">Late arrival → half-day penalty</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="EarlyLeaveCountsAsHalfDay" value="true" class="form-check-input" checked id="addEarlyHalf" />
+                            <label class="form-check-label" for="addEarlyHalf">Early shift-over → half-day penalty</label>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card bg-light border-0 p-3">
+                            <div class="form-check form-switch mb-2">
+                                <input type="checkbox" name="EnableSandwichRule" value="true" class="form-check-input" id="addSandwich" />
+                                <label class="form-check-label fw-semibold" for="addSandwich">Enable Sandwich Rule</label>
+                            </div>
+                            <small class="text-muted d-block mb-2">Agar week-off ke pehle aur baad wale working day par absent ho, to week-off bhi absent count hoga.</small>
+                            <label class="form-label small mb-1">Weekly Off Days</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var dow in Enum.GetValues<DayOfWeek>())
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="WeeklyOffDayOptions" value="@dow" id="add_off_@dow" @(dow == DayOfWeek.Sunday ? "checked" : null) />
+                                        <label class="form-check-label" for="add_off_@dow">@dow</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="2" placeholder="Optional note about this rule"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success mt-3"><i class="fas fa-save me-2"></i>Save Rule</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form method="get">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Search rule name, description..." />
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary">Search</button>
+                            <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Rules List (@Model.Count)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Shift</th>
+                                <th>Working Days</th>
+                                <th>Sandwich</th>
+                                <th>Half Day</th>
+                                <th>Leave</th>
+                                <th>Status</th>
+                                <th width="200">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Count > 0)
+                            {
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.RuleName</strong>
+                                            @if (item.IsDefault)
+                                            {
+                                                <span class="badge bg-warning text-dark ms-1">Default</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                                            {
+                                                <br /><small class="text-muted">@item.Description</small>
+                                            }
+                                        </td>
+                                        <td><small>@item.ShiftDisplay</small></td>
+                                        <td>@item.WorkingDaysPerMonth</td>
+                                        <td>@(item.EnableSandwichRule ? "ON" : "OFF")</td>
+                                        <td>@item.HalfDayDeductionFactor</td>
+                                        <td>@(item.LeaveIsPaid ? "Paid" : "Unpaid")</td>
+                                        <td>
+                                            @if (item.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (GymManagement.Helpers.PermissionHelper.CanEdit(Context, PermissionRepo, "SalaryRuleMaster"))
+                                            {
+                                                <button class="btn btn-warning btn-sm" onclick="loadSalaryRule(@item.RuleId)">Edit</button>
+                                                @if (!item.IsDefault)
+                                                {
+                                                    <a asp-action="SetDefault" asp-route-id="@item.RuleId" class="btn btn-info btn-sm" title="Set as default">Default</a>
+                                                }
+                                            }
+                                            @if (GymManagement.Helpers.PermissionHelper.CanDelete(Context, PermissionRepo, "SalaryRuleMaster"))
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.RuleId" class="btn btn-danger btn-sm" onclick="return confirm('Delete this rule?')">Delete</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        Koi rule nahi hai. Upar <strong>Add Rule</strong> se pehla rule banayein.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i>Rule Book</h5>
+            </div>
+            <div class="card-body rule-book">
+                <ol class="mb-0 small">
+                    <li class="mb-2"><strong>Per Day Salary</strong> = Staff Basic ÷ Working Days</li>
+                    <li class="mb-2"><strong>Shift Start</strong> — late grace ke baad check-in → half-day penalty</li>
+                    <li class="mb-2"><strong>Shift Over</strong> — grace se pehle check-out → half-day penalty</li>
+                    <li class="mb-2"><strong>Sandwich</strong> — week-off ke dono taraf absent → off day bhi deduct</li>
+                    <li class="mb-2"><strong>Present</strong> — koi deduction nahi (shift penalty alag)</li>
+                    <li class="mb-2"><strong>Absent</strong> — 1 full day deduction (agar enabled)</li>
+                    <li class="mb-2"><strong>Half Day</strong> — Factor × per day (default 0.5)</li>
+                    <li class="mb-2"><strong>Leave</strong> — unpaid leave par deduction</li>
+                    <li class="mb-2"><strong>Net</strong> = Basic − Deductions (min ₹0)</li>
+                    <li>Salary Processing me rule select karke generate karein</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSalaryRuleModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Edit Salary Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editSalaryRuleContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadSalaryRule(id) {
+        fetch('/SalaryRuleMaster/Edit/' + id)
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('editSalaryRuleContainer').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('editSalaryRuleModal')).show();
+            });
+    }
+</script>

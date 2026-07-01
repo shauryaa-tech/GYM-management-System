@@ -1,0 +1,143 @@
+﻿@model GymManagement.Models.ExerciseMaster
+
+@{
+    ViewData["Title"] = "Add Exercise";
+}
+
+<div class="card shadow border-0">
+
+    <div class="card-header bg-primary text-white">
+
+        <h4 class="mb-0">
+            Add New Exercise
+        </h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="post">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Exercise Name
+                    </label>
+
+                    <input asp-for="ExerciseName"
+                           class="form-control"
+                           placeholder="Enter exercise name"
+                           required />
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Muscle Group
+                    </label>
+
+                    <select asp-for="MuscleGroup"
+                            class="form-select">
+
+                        <option>Chest</option>
+                        <option>Back</option>
+                        <option>Shoulders</option>
+                        <option>Biceps</option>
+                        <option>Triceps</option>
+                        <option>Legs</option>
+                        <option>Core</option>
+                        <option>Full Body</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Difficulty Level
+                    </label>
+
+                    <select asp-for="DifficultyLevel"
+                            class="form-select">
+
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Calories Burn
+                    </label>
+
+                    <input asp-for="CaloriesBurn"
+                           type="number"
+                           class="form-control"
+                           placeholder="Calories Burn" />
+
+                </div>
+
+                <div class="col-md-12 mb-3">
+
+                    <label class="form-label">
+                        Description
+                    </label>
+
+                    <textarea asp-for="Description"
+                              rows="4"
+                              class="form-control"
+                              placeholder="Exercise description">
+                </textarea>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Status
+                    </label>
+
+                    <select asp-for="Status"
+                            class="form-select">
+
+                        <option value="true">
+                            Active
+                        </option>
+
+                        <option value="false">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success">
+
+                Save Exercise
+
+            </button>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </form>
+
+    </div>
+
+</div>

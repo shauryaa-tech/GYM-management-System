@@ -1,0 +1,201 @@
+@model GymManagement.ViewModels.StaffAttendanceSummary
+@{
+    ViewData["Title"] = "Generate Salary";
+    var monthNames = new[] { "", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    var defaultGateway = ViewBag.DefaultGateway as GymManagement.Models.PaymentGateway;
+    var canPayOnline = defaultGateway != null && defaultGateway.IsActive;
+}
+
+<style>
+    .salary-preview-card { border-radius: 18px; border: 0; box-shadow: 0 8px 30px rgba(15,23,42,.08); }
+    .rule-box { background: #f8fafc; border-radius: 12px; padding: 16px; border-left: 4px solid #6366f1; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Generate Salary</h2>
+        <p class="text-muted mb-0">@Model.StaffName — @monthNames[Model.Month] @Model.Year</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+@if (Model.IsPaid)
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Payment Status: Paid</strong> —
+        @monthNames[Model.Month] @Model.Year ki salary pay ho chuki hai
+        @if (Model.ExistingPaidDate.HasValue)
+        {
+            <span class="ms-1">(@Model.ExistingPaidDate.Value.ToString("dd MMM yyyy") — @Model.ExistingPaymentMode)</span>
+        }
+    </div>
+}
+else if (Model.IsPaymentPending)
+{
+    <div class="alert alert-warning">
+        <i class="fas fa-clock me-2"></i>
+        <strong>Payment Status: Pending</strong> —
+        Salary generate ho chuki hai lekin payment abhi pending hai (₹@Model.NetSalary.ToString("N0")).
+        Neeche se <strong>Pay Online</strong> dubara try karein ya <strong>Cash/Bank</strong> se mark as paid karein.
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card salary-preview-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-calculator text-primary me-2"></i>Salary Calculation</h5>
+            <div class="rule-box mb-3 small text-muted">@Model.RuleSummary</div>
+            <table class="table table-sm">
+                <tr><td>Basic Salary</td><td class="text-end fw-bold">₹@Model.BasicSalary.ToString("N0")</td></tr>
+                <tr><td>Working Days / Month</td><td class="text-end">@Model.WorkingDaysPerMonth</td></tr>
+                <tr><td>Per Day Salary</td><td class="text-end">₹@Model.PerDaySalary.ToString("N2")</td></tr>
+                <tr class="table-success"><td>Present Days</td><td class="text-end fw-bold">@Model.PresentDays</td></tr>
+                <tr class="table-danger"><td>Absent Days</td><td class="text-end fw-bold">@Model.AbsentDays</td></tr>
+                <tr class="table-warning"><td>Leave Days</td><td class="text-end fw-bold">@Model.LeaveDays</td></tr>
+                <tr class="table-info"><td>Half Days</td><td class="text-end fw-bold">@Model.HalfDays</td></tr>
+                @if (Model.SandwichAbsentDays > 0)
+                {
+                    <tr class="table-danger"><td>Sandwich Off Days</td><td class="text-end fw-bold">@Model.SandwichAbsentDays</td></tr>
+                }
+                @if (Model.LatePenaltyDays > 0)
+                {
+                    <tr><td>Late Penalty (days)</td><td class="text-end text-danger">@Model.LatePenaltyDays.ToString("0.##")</td></tr>
+                }
+                @if (Model.EarlyLeavePenaltyDays > 0)
+                {
+                    <tr><td>Early Leave Penalty (days)</td><td class="text-end text-danger">@Model.EarlyLeavePenaltyDays.ToString("0.##")</td></tr>
+                }
+                <tr><td>Deduction Days (effective)</td><td class="text-end text-danger">@Model.DeductionDays.ToString("0.##")</td></tr>
+                <tr><td>Total Deductions</td><td class="text-end text-danger fw-bold">₹@Model.Deductions.ToString("N2")</td></tr>
+                <tr class="table-primary"><td><strong>Net Salary</strong></td><td class="text-end"><strong class="fs-5">₹@Model.NetSalary.ToString("N0")</strong></td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card salary-preview-card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Daily Attendance (@Model.TotalMarkedDays days marked)</h5>
+            <div class="table-responsive" style="max-height:320px;overflow-y:auto">
+                <table class="table table-sm table-hover">
+                    <thead><tr><th>Date</th><th>Status</th><th>In</th><th>Out</th></tr></thead>
+                    <tbody>
+                        @foreach (var d in Model.DailyRows)
+                        {
+                            var badge = d.Status switch
+                            {
+                                "Present" => "bg-success",
+                                "Absent" => "bg-danger",
+                                "Leave" => "bg-warning text-dark",
+                                "HalfDay" => "bg-info",
+                                _ => "bg-secondary"
+                            };
+                            <tr>
+                                <td>@d.Date.ToString("dd MMM yyyy")</td>
+                                <td><span class="badge @badge">@d.Status</span></td>
+                                <td>@(d.CheckInTime?.ToString(@"hh\:mm") ?? "—")</td>
+                                <td>@(d.CheckOutTime?.ToString(@"hh\:mm") ?? "—")</td>
+                            </tr>
+                        }
+                        @if (!Model.DailyRows.Any())
+                        {
+                            <tr><td colspan="4" class="text-center text-muted">No attendance marked for this month</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (!Model.IsPaid)
+        {
+            <div class="card salary-preview-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">@(Model.IsPaymentPending ? "Complete Pending Payment" : "Confirm & Pay Salary")</h5>
+                    @if (Model.IsPaymentPending)
+                    {
+                        <span class="badge bg-warning text-dark fs-6">Pending</span>
+                    }
+                </div>
+
+                @if (canPayOnline)
+                {
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fa-solid fa-circle-check me-1"></i>
+                        Online payment: <strong>@defaultGateway!.GatewayName</strong>
+                        (@(defaultGateway.IsDefault ? "Default" : "Active") gateway)
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        Online payment ke liye pehle
+                        <a asp-controller="PaymentGateway" asp-action="Index">Masters → Payment Gateway</a>
+                        me ek gateway <strong>Active + Default</strong> set karein.
+                    </div>
+                }
+
+                <form method="post" asp-action="GenerateAndSave" data-full-nav="true">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="staffId" value="@Model.StaffId" />
+                    <input type="hidden" name="month" value="@Model.Month" />
+                    <input type="hidden" name="year" value="@Model.Year" />
+                    <input type="hidden" name="ruleId" value="@Model.RuleId" />
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Paid Date</label>
+                            <input type="date" name="paidDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Payment Mode</label>
+                            <select name="paymentMode" class="form-select">
+                                <option value="Cash">Cash</option>
+                                <option value="UPI">UPI (Manual)</option>
+                                <option value="Bank">Bank Transfer</option>
+                                <option value="Card">Card (Manual)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Remarks</label>
+                            <input type="text" name="remarks" class="form-control" placeholder="Optional note" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-3">
+                        <i class="fas fa-check me-2"></i>
+                        @(Model.IsPaymentPending ? "Mark as Paid" : "Generate & Save Salary") (₹@Model.NetSalary.ToString("N0"))
+                    </button>
+                </form>
+
+                <form method="post" asp-action="GenerateAndPayOnline" class="mt-3 border-top pt-3" data-full-nav="true">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="staffId" value="@Model.StaffId" />
+                    <input type="hidden" name="month" value="@Model.Month" />
+                    <input type="hidden" name="year" value="@Model.Year" />
+                    <input type="hidden" name="ruleId" value="@Model.RuleId" />
+                    <div class="mb-3">
+                        <label class="form-label">Remarks (optional)</label>
+                        <input type="text" name="remarks" class="form-control" placeholder="Online salary payment note" />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" @(canPayOnline ? null : "disabled")>
+                        <i class="fa-solid fa-building-columns me-2"></i>
+                        @(Model.IsPaymentPending ? "Retry Pay Online" : "Pay Online via Gateway") (₹@Model.NetSalary.ToString("N0"))
+                    </button>
+                    <small class="text-muted d-block mt-2 text-center">
+                        @if (canPayOnline)
+                        {
+                            <span>
+                                @(Model.IsPaymentPending ? "Pending salary" : "Salary save hogi")
+                                → @defaultGateway!.GatewayName checkout khulega → payment ke baad auto <strong>Paid</strong> mark hogi.
+                                Agar payment fail ho to status <strong>Pending</strong> rahega.
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Gateway configure karne ke baad yeh button enable hoga.</span>
+                        }
+                    </small>
+                </form>
+            </div>
+        }
+    </div>
+</div>

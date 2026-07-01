@@ -1,0 +1,187 @@
+@model GymManagement.ViewModels.SalaryStatementReportViewModel
+@{
+    ViewData["Title"] = "Salary Statement";
+    var importRoute = new Dictionary<string, string>
+    {
+        ["month"] = Model.Month.ToString(),
+        ["year"] = Model.Year.ToString()
+    };
+}
+
+<link rel="stylesheet" href="~/css/salary-statement.css" asp-append-version="true" />
+
+<div class="salary-stmt-toolbar no-print">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Salary Statement</h2>
+            <p class="text-muted mb-0">Database / import se salary data — @Model.MonthLabel</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+            @await Component.InvokeAsync("ExportImport", new {
+                module = "SalaryStatement",
+                allowImport = true,
+                exportAction = "ExportStatement",
+                importAction = "ImportStatement",
+                redirectAction = "Statement",
+                exportAsExcel = true,
+                routeValues = importRoute
+            })
+            <a asp-action="ExportStatementCsv" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="btn btn-outline-success btn-sm" data-full-nav="true">
+                <i class="fa-solid fa-file-csv me-1"></i> CSV Template
+            </a>
+            <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-print me-1"></i> Print</button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-3 mb-0">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3 mb-0">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+
+    @if (string.IsNullOrWhiteSpace(Model.CompanyName))
+    {
+        <div class="alert alert-info py-2 small mt-3 mb-0">
+            Company name <strong>appsettings.json</strong> → <code>Gym:Name</code> / <code>Gym:Address</code> se aata hai (hardcode nahi).
+        </div>
+    }
+
+    <form method="get" asp-action="Statement" class="row g-2 align-items-end mt-3">
+        <div class="col-auto">
+            <label class="form-label small mb-0">Month</label>
+            <select name="month" class="form-select form-select-sm">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    if (m == Model.Month)
+                    {
+                        <option value="@m" selected>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                    }
+                    else
+                    {
+                        <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-0">Year</label>
+            <input type="number" name="year" class="form-control form-control-sm" value="@Model.Year" min="2020" max="2099" />
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-sm btn-primary">View</button>
+        </div>
+    </form>
+</div>
+
+<div class="salary-stmt-sheet" id="salaryStatementSheet">
+    <div class="salary-stmt-header text-center">
+        @if (!string.IsNullOrWhiteSpace(Model.CompanyName))
+        {
+            <h3 class="salary-stmt-company mb-1">@Model.CompanyName</h3>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.CompanyAddress))
+        {
+            <p class="salary-stmt-address mb-2">@Model.CompanyAddress</p>
+        }
+        <h4 class="salary-stmt-title mb-0">Salary Statement Report For the Month of @Model.MonthLabel</h4>
+        <p class="salary-stmt-meta mb-0">Rule: @Model.RuleName · Working days/month: @Model.WorkingDaysPerMonth</p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="salary-stmt-table">
+            <thead>
+                <tr class="salary-stmt-group-row">
+                    <th colspan="5">Employee Detail</th>
+                    <th colspan="7">Attendance Detail</th>
+                    <th colspan="2">Fixed Gross</th>
+                    <th colspan="3">Earned / Deduction</th>
+                    <th colspan="2">Net Pay</th>
+                </tr>
+                <tr class="salary-stmt-col-row">
+                    <th>EmpCode</th>
+                    <th>Employee</th>
+                    <th>Company</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>P</th>
+                    <th>A</th>
+                    <th>WO</th>
+                    <th>L</th>
+                    <th>HD</th>
+                    <th>OT HRS</th>
+                    <th class="salary-stmt-highlight">TotalDays</th>
+                    <th>BASIC</th>
+                    <th class="salary-stmt-highlight">Gross</th>
+                    <th>Earned</th>
+                    <th>Deduction</th>
+                    <th>Per Day</th>
+                    <th class="salary-stmt-highlight">Net Pay</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>
+                        <td>@r.EmpCode</td>
+                        <td class="salary-stmt-name">@r.EmployeeName</td>
+                        <td>@r.Company</td>
+                        <td>@r.Department</td>
+                        <td>@r.Designation</td>
+                        <td class="text-center">@r.PresentDays</td>
+                        <td class="text-center">@r.AbsentDays</td>
+                        <td class="text-center">@r.WeeklyOffDays</td>
+                        <td class="text-center">@r.LeaveDays</td>
+                        <td class="text-center">@r.HalfDays</td>
+                        <td class="text-center">@r.OtHours</td>
+                        <td class="text-center salary-stmt-highlight-cell fw-semibold">@r.TotalDays.ToString("0.##")</td>
+                        <td class="text-end">@r.Basic.ToString("N0")</td>
+                        <td class="text-end salary-stmt-highlight-cell fw-semibold">@r.Gross.ToString("N0")</td>
+                        <td class="text-end">@r.EarnedGross.ToString("N0")</td>
+                        <td class="text-end text-danger">@r.Deductions.ToString("N0")</td>
+                        <td class="text-end text-muted small">@r.PerDaySalary.ToString("N2")</td>
+                        <td class="text-end salary-stmt-highlight-cell fw-bold">@r.NetPay.ToString("N0")</td>
+                        <td class="text-center">
+                            @if (r.HasSalaryRecord && r.IsPaid)
+                            {
+                                <span class="badge bg-success">Paid</span>
+                                @if (!string.IsNullOrEmpty(r.PaymentMode))
+                                {
+                                    <small class="d-block text-muted">@r.PaymentMode</small>
+                                }
+                            }
+                            else if (r.HasSalaryRecord)
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                @if (!string.IsNullOrEmpty(r.PaymentMode))
+                                {
+                                    <small class="d-block text-muted">@r.PaymentMode</small>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Not Generated</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="salary-stmt-total-row">
+                    <td colspan="12" class="text-end fw-bold">Grand Total (@Model.Rows.Count staff)</td>
+                    <td class="text-end fw-bold">@Model.TotalGross.ToString("N0")</td>
+                    <td class="text-end fw-bold">@Model.TotalGross.ToString("N0")</td>
+                    <td></td>
+                    <td class="text-end fw-bold text-danger">@Model.TotalDeductions.ToString("N0")</td>
+                    <td></td>
+                    <td class="text-end fw-bold">@Model.TotalNet.ToString("N0")</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

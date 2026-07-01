@@ -1,0 +1,192 @@
+@model GymManagement.Models.MembershipTransaction
+
+@{
+    ViewData["Title"] = "Add Membership";
+}
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h4>Add Membership</h4>
+    </div>
+
+    <div class="card-body">
+
+        <form method="post">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Member</label>
+
+                    <select asp-for="MemberId"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Select Member
+                        </option>
+
+                        @foreach (var member in ViewBag.Members)
+                        {
+                            <option value="@member.MemberId">
+                                @member.MemberCode - @member.MemberName
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Membership Plan</label>
+
+                    <select asp-for="PlanId"
+                            id="PlanId"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Select Plan
+                        </option>
+
+                        @foreach (var plan in ViewBag.Plans)
+                        {
+                            <option value="@plan.PlanId"
+                                    data-amount="@plan.Amount"
+                                    data-duration="@plan.DurationMonths">
+
+                                @plan.PlanName
+
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Start Date</label>
+                    <input asp-for="StartDate"
+                           id="StartDate"
+                           type="date"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>End Date</label>
+                    <input asp-for="EndDate"
+                           id="EndDate"
+                           type="date"
+                           class="form-control"
+                           readonly />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Amount</label>
+                    <input asp-for="Amount"
+                           id="Amount"
+                           class="form-control"
+                           readonly />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Payment Status</label>
+                    <select asp-for="PaymentStatus" class="form-select">
+                        <option value="Pending" selected>Pending (pay later)</option>
+                        <option value="Paid">Paid (already received)</option>
+                        <option value="Partial">Partial</option>
+                    </select>
+                    <small class="text-muted">Pending rakhein — baad mein Online ya Cash se payment record karein</small>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label>Remarks</label>
+                    <textarea asp-for="Remarks"
+                              class="form-control"></textarea>
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success">
+                Save Membership
+            </button>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+                Back
+            </a>
+
+        </form>
+
+        <script>
+
+            document.addEventListener(
+            "DOMContentLoaded",
+            function()
+            {
+                const plan =
+                    document.getElementById("PlanId");
+
+                const startDate =
+                    document.getElementById("StartDate");
+
+                function calculatePlan()
+                {
+                    if(
+                        !plan.value ||
+                        !startDate.value
+                    )
+                    {
+                        return;
+                    }
+
+                    const selected =
+                        plan.selectedOptions[0];
+
+                    const amount =
+                        selected.dataset.amount;
+
+                    const months =
+                        parseInt(
+                            selected.dataset.duration
+                        );
+
+                    document.getElementById(
+                        "Amount"
+                    ).value = amount;
+
+                    let end =
+                        new Date(
+                            startDate.value
+                        );
+
+                    end.setMonth(
+                        end.getMonth() + months
+                    );
+
+                    document.getElementById(
+                        "EndDate"
+                    ).value =
+                    end.toISOString()
+                       .split('T')[0];
+                }
+
+                plan.addEventListener(
+                    "change",
+                    calculatePlan
+                );
+
+                startDate.addEventListener(
+                    "change",
+                    calculatePlan
+                );
+            });
+
+        </script>
+
+    </div>
+</div>

@@ -1,0 +1,82 @@
+﻿@model GymManagement.Models.ExerciseMaster
+
+<form method="post"
+      asp-action="Edit">
+
+    <input asp-for="ExerciseId" type="hidden" />
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+
+            <label>Exercise Name</label>
+
+            <input asp-for="ExerciseName"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label>Muscle Group</label>
+
+            <input asp-for="MuscleGroup"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label>Difficulty</label>
+
+            <input asp-for="DifficultyLevel"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label>Calories Burn</label>
+
+            <input asp-for="CaloriesBurn"
+                   class="form-control" />
+
+        </div>
+
+        <div class="col-md-12 mb-3">
+
+            <label>Description</label>
+
+            <textarea asp-for="Description"
+                      class="form-control"></textarea>
+
+        </div>
+
+        <div class="col-md-6 mb-3">
+
+            <label>Status</label>
+
+            <select asp-for="Status"
+                    class="form-select">
+
+                <option value="true">
+                    Active
+                </option>
+
+                <option value="false">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+    <button class="btn btn-success">
+
+        Update Exercise
+
+    </button>
+
+</form>

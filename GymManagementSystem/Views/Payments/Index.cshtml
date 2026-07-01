@@ -1,0 +1,276 @@
+@model List<GymManagement.Models.Payment>
+
+@{
+    ViewData["Title"] = "Payment Entry";
+
+    decimal totalCollections = Model.Sum(x => x.Amount);
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg,#2563eb,#7c3aed);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .stats-card {
+        border: none;
+        border-radius: 18px;
+        transition: .3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .form-control, .form-select { border-radius: 10px; }
+    .btn { border-radius: 10px; }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Payment Entry</h2>
+            <p class="mb-0">Record and manage member payments</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @await Component.InvokeAsync("ExportImport", new { module = "Payments" })
+            <button class="btn btn-light btn-lg" data-bs-toggle="collapse" data-bs-target="#paymentForm">
+                <i class="fas fa-plus me-2"></i>New Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <h6>Total Collections (Filtered)</h6>
+                <h2>₹ @totalCollections.ToString("N2")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse mb-4" id="paymentForm">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Process New Payment</h5>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#manualPayment" type="button">Manual Payment</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#onlinePayment" type="button">Pay Online (Paytm)</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="manualPayment">
+            <form method="post" asp-action="Save">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Member</label>
+                        <select name="MemberId" class="form-select" required>
+                            <option value="">Select Member</option>
+                            @foreach (var member in ViewBag.Members)
+                            {
+                                <option value="@member.MemberId">@member.MemberCode - @member.MemberName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Payment For</label>
+                        <select name="Remarks" class="form-select">
+                            <option value="Membership">Membership</option>
+                            <option value="Personal Training">Personal Training</option>
+                            <option value="Class Booking">Class Booking</option>
+                            <option value="Product Purchase">Product Purchase</option>
+                            <option value="Renewal">Renewal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Payment Date</label>
+                        <input type="date" name="PaymentDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Amount (₹)</label>
+                        <input type="number" step="0.01" min="1" name="Amount" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Payment Mode</label>
+                        <select name="PaymentMode" class="form-select" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank">Bank Transfer</option>
+                            <option value="Paytm">Paytm</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Reference No (Txn ID)</label>
+                        <input type="text" name="ReferenceNo" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Payment
+                </button>
+            </form>
+                </div>
+                <div class="tab-pane fade" id="onlinePayment">
+                    <form method="post" asp-action="PayOnline">
+                        @Html.AntiForgeryToken()
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label>Member</label>
+                                <select name="memberId" class="form-select" required>
+                                    <option value="">Select Member</option>
+                                    @foreach (var member in ViewBag.Members)
+                                    {
+                                        <option value="@member.MemberId">@member.MemberCode - @member.MemberName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>Payment For</label>
+                                <select name="paymentFor" class="form-select" required>
+                                    <option value="Membership">Membership</option>
+                                    <option value="Personal Training">Personal Training</option>
+                                    <option value="Class Booking">Class Booking</option>
+                                    <option value="Product Purchase">Product Purchase</option>
+                                    <option value="Diet Plan">Diet Plan</option>
+                                    <option value="Renewal">Renewal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>Amount (₹)</label>
+                                <input type="number" step="0.01" min="1" name="amount" class="form-control" required />
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label>Remarks</label>
+                                <input type="text" name="remarks" class="form-control" placeholder="Optional note" />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-building-columns me-2"></i>Pay Online via Paytm
+                        </button>
+                        <small class="text-muted d-block mt-2">Requires an active default payment gateway configured under Masters → Payment Gateway.</small>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEARCH -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Mode</label>
+                    <select name="mode" class="form-select">
+                        <option value="">All Modes</option>
+                        <option value="Cash" selected="@(ViewBag.Mode == "Cash")">Cash</option>
+                        <option value="Card" selected="@(ViewBag.Mode == "Card")">Card</option>
+                        <option value="UPI" selected="@(ViewBag.Mode == "UPI")">UPI</option>
+                        <option value="Bank" selected="@(ViewBag.Mode == "Bank")">Bank Transfer</option>
+                        <option value="Paytm" selected="@(ViewBag.Mode == "Paytm")">Paytm</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary me-2">Filter</button>
+                    <a asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="card shadow border-0">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Transactions List (@Model.Count)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Member Code</th>
+                        <th>Member Name</th>
+                        <th>Amount (₹)</th>
+                        <th>Mode</th>
+                        <th>Ref No</th>
+                        <th>Remarks</th>
+                        <th width="100">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.PaymentDate.ToString("dd-MMM-yyyy")</td>
+                                <td>@item.MemberCode</td>
+                                <td>@item.MemberName</td>
+                                <td class="fw-bold text-success">@item.Amount.ToString("N2")</td>
+                                <td>
+                                    @if(item.PaymentMode == "Cash")
+                                    {
+                                        <span class="badge bg-secondary">Cash</span>
+                                    }
+                                    else if(item.PaymentMode == "UPI")
+                                    {
+                                        <span class="badge bg-primary">UPI</span>
+                                    }
+                                    else if(item.PaymentMode == "Card")
+                                    {
+                                        <span class="badge bg-info text-dark">Card</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark">@item.PaymentMode</span>
+                                    }
+                                </td>
+                                <td>@item.ReferenceNo</td>
+                                <td>@item.Remarks</td>
+                                <td>
+                                    <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-danger btn-sm" onclick="return confirm('Delete Transaction?')">Delete</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No Payment Records Found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+@model GymManagement.Models.ExpenseHeadMaster
+
+<form method="post" asp-action="Update">
+    <input type="hidden" asp-for="ExpenseHeadId" />
+
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Category Name</label>
+            <input asp-for="HeadName" class="form-control" required />
+        </div>
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Description</label>
+            <input asp-for="Description" class="form-control" />
+        </div>
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Status</label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+    </div>
+    <div class="text-end">
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-2"></i>Update Category
+        </button>
+    </div>
+</form>

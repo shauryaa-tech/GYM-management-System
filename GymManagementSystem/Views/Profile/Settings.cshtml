@@ -1,0 +1,227 @@
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<style>
+    .settings-page-header {
+        background: linear-gradient(135deg, #1e40af, #4338ca 50%, #7c3aed);
+        color: #fff;
+        border-radius: 22px;
+        padding: 28px 30px;
+        margin-bottom: 28px;
+    }
+    .settings-card {
+        border: 1px solid var(--cm-border);
+        border-radius: 18px;
+        background: var(--cm-surface);
+        box-shadow: var(--cm-shadow-sm);
+    }
+    .theme-option {
+        border: 2px solid var(--cm-border);
+        border-radius: 16px;
+        padding: 20px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.22s ease;
+        background: var(--cm-bg-soft);
+        height: 100%;
+    }
+    .theme-option:hover {
+        border-color: var(--cm-primary);
+        transform: translateY(-3px);
+        box-shadow: var(--cm-shadow-sm);
+    }
+    .theme-option.active {
+        border-color: var(--cm-primary);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08));
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .theme-preview {
+        width: 100%;
+        height: 72px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border: 1px solid var(--cm-border);
+        overflow: hidden;
+        display: flex;
+    }
+    .theme-preview .bar { width: 28%; height: 100%; }
+    .theme-preview .main {
+        flex: 1;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .theme-preview .line {
+        height: 8px;
+        border-radius: 4px;
+        opacity: 0.85;
+    }
+    .preview-light .bar { background: #1e3a8a; }
+    .preview-light .main { background: #f8fafc; }
+    .preview-light .line { background: #cbd5e1; }
+    .preview-dark .bar { background: #0f172a; }
+    .preview-dark .main { background: #1e293b; }
+    .preview-dark .line { background: #475569; }
+    .preview-auto .bar { background: linear-gradient(180deg, #1e3a8a, #0f172a); }
+    .preview-auto .main { background: linear-gradient(90deg, #f8fafc 50%, #1e293b 50%); }
+    .preview-auto .line { background: linear-gradient(90deg, #cbd5e1 50%, #475569 50%); }
+    .theme-option i.option-icon {
+        font-size: 1.25rem;
+        margin-bottom: 6px;
+        color: var(--cm-primary);
+    }
+    .current-theme-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.15);
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="settings-page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fa-solid fa-sliders me-2"></i>Settings</h2>
+            <p class="mb-0 opacity-75">App appearance aur preferences manage karein</p>
+        </div>
+        <div class="current-theme-badge" id="currentThemeBadge">
+            <i class="fa-solid fa-circle-half-stroke"></i>
+            <span>Theme: Auto</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="settings-card p-4">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-palette text-primary me-2"></i>Theme</h5>
+            <p class="text-muted mb-4">Light, Dark ya System ke hisaab se (Auto) choose karein.</p>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="theme-option" data-theme-choice="light" role="button" tabindex="0">
+                        <div class="theme-preview preview-light">
+                            <div class="bar"></div>
+                            <div class="main">
+                                <div class="line" style="width:70%"></div>
+                                <div class="line" style="width:90%"></div>
+                                <div class="line" style="width:55%"></div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-sun option-icon"></i>
+                        <div class="fw-bold">Light Mode</div>
+                        <small class="text-muted">Hamesha light theme</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="theme-option" data-theme-choice="dark" role="button" tabindex="0">
+                        <div class="theme-preview preview-dark">
+                            <div class="bar"></div>
+                            <div class="main">
+                                <div class="line" style="width:70%"></div>
+                                <div class="line" style="width:90%"></div>
+                                <div class="line" style="width:55%"></div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-moon option-icon"></i>
+                        <div class="fw-bold">Dark Mode</div>
+                        <small class="text-muted">Hamesha dark theme</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="theme-option" data-theme-choice="auto" role="button" tabindex="0">
+                        <div class="theme-preview preview-auto">
+                            <div class="bar"></div>
+                            <div class="main">
+                                <div class="line" style="width:70%"></div>
+                                <div class="line" style="width:90%"></div>
+                                <div class="line" style="width:55%"></div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-circle-half-stroke option-icon"></i>
+                        <div class="fw-bold">Auto</div>
+                        <small class="text-muted">System setting follow karega</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success mt-4 d-none" id="themeSavedAlert">
+                <i class="fa-solid fa-check-circle me-2"></i>Theme saved! Poori app par apply ho gaya.
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="settings-card p-4 mb-4">
+            <h6 class="fw-bold mb-3">Quick Links</h6>
+            <div class="d-grid gap-2">
+                <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-primary text-start" data-full-nav="true">
+                    <i class="fa fa-user me-2"></i>My Profile
+                </a>
+                <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-secondary text-start" data-full-nav="true">
+                    <i class="fa fa-key me-2"></i>Change Password
+                </a>
+                <a href="/Dashboard/Index" class="btn btn-outline-secondary text-start">
+                    <i class="fa fa-chart-line me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+        <div class="settings-card p-4">
+            <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-info text-info me-2"></i>Note</h6>
+            <p class="text-muted small mb-0">
+                Theme aapke browser me save hota hai. Auto mode me Windows/Mac ka dark/light setting follow hoti hai.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var labels = { light: 'Light', dark: 'Dark', auto: 'Auto' };
+        var icons = { light: 'fa-sun', dark: 'fa-moon', auto: 'fa-circle-half-stroke' };
+
+        function refreshUi() {
+            if (!window.CloudMexTheme) return;
+            var pref = CloudMexTheme.getPreference();
+            document.querySelectorAll('[data-theme-choice]').forEach(function (el) {
+                el.classList.toggle('active', el.getAttribute('data-theme-choice') === pref);
+            });
+            var resolved = CloudMexTheme.resolveTheme(pref);
+            var badge = document.getElementById('currentThemeBadge');
+            if (badge) {
+                badge.innerHTML = '<i class="fa-solid ' + icons[pref] + '"></i><span>Theme: ' + labels[pref] +
+                    (pref === 'auto' ? ' (' + labels[resolved] + ')' : '') + '</span>';
+            }
+        }
+
+        function selectTheme(choice) {
+            if (!window.CloudMexTheme) return;
+            CloudMexTheme.setPreference(choice);
+            refreshUi();
+            var alert = document.getElementById('themeSavedAlert');
+            if (alert) {
+                alert.classList.remove('d-none');
+                setTimeout(function () { alert.classList.add('d-none'); }, 2500);
+            }
+        }
+
+        document.querySelectorAll('[data-theme-choice]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                selectTheme(el.getAttribute('data-theme-choice'));
+            });
+            el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectTheme(el.getAttribute('data-theme-choice'));
+                }
+            });
+        });
+
+        refreshUi();
+    })();
+</script>

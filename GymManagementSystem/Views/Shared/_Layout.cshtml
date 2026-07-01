@@ -1,0 +1,1323 @@
+@inject GymManagement.Data.Repositories.RolePermissionRepository PermissionRepo
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - CloudMex Gym</title>
+    <script>
+        (function () {
+            var p = localStorage.getItem('cm-theme') || 'auto';
+            var t = p === 'auto'
+                ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : p;
+            document.documentElement.setAttribute('data-theme', t);
+            document.documentElement.style.colorScheme = t;
+        })();
+    </script>
+
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- TYPOGRAPHY & GLOBAL THEME -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/notification-toast.css" asp-append-version="true" />
+
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar-nav.js" asp-append-version="true"></script>
+    <script src="~/js/navbar.js" asp-append-version="true"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8fafc;
+        }
+
+        /* ================= NAVBAR (GLASSMORPHISM & MODERN) ================= */
+        .top-navbar {
+            height: 70px;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(37, 99, 235, 0.9) 50%, rgba(124, 58, 237, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+            .top-navbar .logo {
+                font-weight: 800;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                letter-spacing: 0.5px;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .top-navbar .logo i {
+                font-size: 1.4rem;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @@keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+            }
+
+        .toggle-btn {
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+            .toggle-btn:hover {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.4);
+                transform: scale(1.05);
+            }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-size: 1.1rem;
+        }
+
+            .nav-icon:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .nav-icon::after {
+                content: '';
+                position: absolute;
+                inset: -2px;
+                border-radius: 16px;
+                background: linear-gradient(135deg, #2563eb, #7c3aed);
+                opacity: 0;
+                transition: opacity 0.3s;
+                z-index: -1;
+            }
+
+            .nav-icon:hover::after {
+                opacity: 0.3;
+            }
+
+        .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(30, 58, 138, 0.95);
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @@keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .search-container {
+            position: relative;
+            margin-right: 8px;
+        }
+
+            .search-container input {
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 50px;
+                padding: 10px 18px 10px 44px;
+                color: white;
+                width: 240px;
+                font-size: 0.9rem;
+                transition: all 0.3s;
+                backdrop-filter: blur(10px);
+            }
+
+                .search-container input::placeholder {
+                    color: rgba(255, 255, 255, 0.6);
+                }
+
+                .search-container input:focus {
+                    outline: none;
+                    background: rgba(255, 255, 255, 0.18);
+                    border-color: rgba(251, 191, 36, 0.5);
+                    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+                    width: 300px;
+                }
+
+            .search-container i {
+                position: absolute;
+                left: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: rgba(255, 255, 255, 0.5);
+                pointer-events: none;
+            }
+
+        .search-results {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            min-width: 320px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+            border: 1px solid #e2e8f0;
+            max-height: 360px;
+            overflow-y: auto;
+            z-index: 2000;
+        }
+
+        .search-result-item {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            text-align: left;
+            color: #1e293b;
+            transition: background 0.15s;
+        }
+
+            .search-result-item:hover {
+                background: #f8fafc;
+            }
+
+        .search-result-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .search-result-body {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-sub {
+            font-size: 0.75rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-empty {
+            padding: 16px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .navbar-dropdown-panel {
+            min-width: 340px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+            .user-dropdown .dropdown-toggle {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 50px;
+                padding: 8px 18px 8px 12px;
+                color: white;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.3s;
+                backdrop-filter: blur(10px);
+            }
+
+                .user-dropdown .dropdown-toggle:hover {
+                    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+                    border-color: rgba(255, 255, 255, 0.4);
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                }
+
+                .user-dropdown .dropdown-toggle::after {
+                    display: none;
+                }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1e3a8a;
+            box-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+            .user-info .user-name {
+                font-weight: 600;
+                font-size: 0.85rem;
+                line-height: 1.2;
+                white-space: nowrap;
+            }
+
+            .user-info .user-role {
+                font-size: 0.65rem;
+                color: rgba(255, 255, 255, 0.7);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+        .dropdown-menu {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+            padding: 8px;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            min-width: 220px;
+        }
+
+            .dropdown-menu::before {
+                content: '';
+                position: absolute;
+                top: -8px;
+                right: 20px;
+                width: 16px;
+                height: 16px;
+                background: white;
+                transform: rotate(45deg);
+                border-top: 1px solid rgba(0, 0, 0, 0.05);
+                border-left: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .dropdown-item {
+                border-radius: 10px;
+                padding: 12px 16px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: #334155;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .dropdown-item:hover {
+                    background: linear-gradient(135deg, #eff6ff, #faf5ff);
+                    color: #2563eb;
+                    transform: translateX(4px);
+                }
+
+                .dropdown-item i {
+                    width: 20px;
+                    text-align: center;
+                    font-size: 1rem;
+                }
+
+                .dropdown-item.text-danger:hover {
+                    background: linear-gradient(135deg, #fef2f2, #fff1f2);
+                    color: #dc2626;
+                }
+
+            .dropdown-divider {
+                border-color: rgba(0, 0, 0, 0.06);
+                margin: 8px 4px;
+            }
+
+        /* Quick stats in navbar */
+        .navbar-stats {
+            display: flex;
+            gap: 16px;
+            margin-right: 16px;
+            padding-right: 16px;
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+            .navbar-stats .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+                .navbar-stats .stat-value {
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                    line-height: 1;
+                }
+
+                .navbar-stats .stat-label {
+                    font-size: 0.6rem;
+                    color: rgba(255, 255, 255, 0.6);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+        /* Responsive */
+        @@media (max-width: 1024px) {
+            .search-container input {
+                width: 180px;
+            }
+                .search-container input:focus {
+                    width: 220px;
+                }
+            .navbar-stats {
+                display: none;
+            }
+            .user-info {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .top-navbar {
+                padding: 0 16px;
+            }
+            .search-container {
+                display: none;
+            }
+            .nav-icon {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* ================= SIDEBAR (UPGRADED & DYNAMIC) ================= */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+            color: white;
+            position: fixed;
+            top: 65px;
+            bottom: 0;
+            left: 0;
+            padding-top: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.3);
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 5px;
+            }
+            .sidebar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .sidebar::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+            }
+            .sidebar::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.25);
+            }
+
+            .sidebar.collapsed {
+                width: 72px;
+            }
+
+            .sidebar.collapsed .submenu,
+            .sidebar.collapsed .submenu.show {
+                display: none !important;
+            }
+
+            .sidebar.collapsed .arrow {
+                display: none !important;
+            }
+
+            .sidebar.collapsed .menu-section {
+                display: none;
+            }
+
+            .sidebar.collapsed a {
+                justify-content: center;
+                align-items: center;
+                gap: 0;
+                padding: 11px 0;
+                margin: 3px 10px;
+                overflow: hidden;
+                white-space: nowrap;
+                font-size: 0;
+                line-height: 0;
+            }
+
+            .sidebar.collapsed a:hover {
+                padding-left: 0;
+            }
+
+            .sidebar.collapsed a i {
+                font-size: 1.15rem;
+                line-height: 1;
+                margin: 0 !important;
+                flex-shrink: 0;
+            }
+
+            .sidebar.collapsed a.active,
+            .sidebar.collapsed a.current-page {
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+
+            .sidebar a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                color: #94a3b8;
+                text-decoration: none;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 12px;
+                margin: 4px 12px;
+                position: relative;
+                font-weight: 500;
+            }
+
+                .sidebar a:hover {
+                    background: rgba(255, 255, 255, 0.07);
+                    color: #f8fafc;
+                    padding-left: 20px;
+                }
+
+                .sidebar a:hover i {
+                    color: #3b82f6;
+                    transform: scale(1.08);
+                }
+
+                .sidebar a.nav-parent {
+                    font-weight: 600;
+                    color: #cbd5e1;
+                }
+
+                .sidebar a.nav-parent > i:first-child {
+                    color: #94a3b8;
+                }
+
+                .sidebar a.active,
+                .sidebar a.current-page {
+                    background: linear-gradient(135deg, #2563eb, #7c3aed);
+                    color: white !important;
+                    font-weight: 600;
+                    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+                }
+
+                .sidebar a.active i,
+                .sidebar a.current-page i {
+                    color: white !important;
+                    transform: scale(1.1);
+                }
+
+        .arrow {
+            margin-left: auto;
+            transition: .3s;
+        }
+
+        .rotate {
+            transform: rotate(180deg);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+            .sidebar .text {
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+
+            .sidebar.collapsed .text {
+                display: none;
+            }
+
+        .menu-section {
+            padding: 18px 20px 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .menu-section i {
+            font-size: 0.7rem;
+            opacity: 0.85;
+        }
+
+        .menu-section .section-label {
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed .menu-section .section-label {
+            display: none;
+        }
+
+        .sidebar.collapsed .menu-section {
+            padding: 15px 0 8px;
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .menu-section::after {
+            display: none;
+        }
+
+        .toggle-section {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+        }
+
+        .toggle-section:hover {
+            color: #f8fafc;
+        }
+
+        .submenu {
+            display: none;
+            flex-direction: column;
+            margin-left: 24px;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            padding-left: 8px;
+        }
+
+        .sidebar.collapsed .submenu {
+            margin-left: 0;
+            border-left: none;
+            padding-left: 0;
+        }
+
+            .submenu.show {
+                display: flex;
+            }
+
+            .submenu a {
+                padding: 9px 12px;
+                font-size: 0.88rem;
+                margin: 2px 4px;
+            }
+
+            .submenu a i {
+                font-size: 0.95rem;
+                width: 18px;
+            }
+
+            .submenu .submenu-nested {
+                margin-left: 8px;
+                padding-left: 6px;
+                border-left: 1px solid rgba(255, 255, 255, 0.06);
+            }
+
+            .submenu .submenu-nested a {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+
+        /* ================= CONTENT ================= */
+        .content {
+            margin-left: 240px;
+            margin-top: 65px;
+            transition: opacity 0.2s ease;
+        }
+
+        .content.is-loading {
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+            .content.expanded {
+                margin-left: 72px;
+            }
+
+        .sidebar-footer-space {
+            height: 24px;
+        }
+
+        @@media(max-width:768px) {
+            .sidebar {
+                left: -240px;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR (MODERN GLASSMORPHISM) ================= -->
+    <div class="top-navbar">
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="logo">
+                <i class="fa-solid fa-dumbbell"></i>
+                CLOUDMEX GYM
+            </div>
+        </div>
+
+        <div class="nav-right">
+
+            <!-- Quick Stats (Desktop only) -->
+            <div class="navbar-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="navTotalMembers">0</span>
+                    <span class="stat-label">Members</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="navActiveMembers">0</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="navTodayRevenue">₹0</span>
+                    <span class="stat-label">Today</span>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search members, classes, products..." id="globalSearch" autocomplete="off" />
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="nav-icon dropdown" style="position:relative;" title="Notifications">
+                <i class="fa-solid fa-bell" data-bs-toggle="dropdown" aria-expanded="false"></i>
+                <span class="notification-badge" id="notificationCount">0</span>
+
+                <ul class="dropdown-menu dropdown-menu-end notification-dropdown" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+                    <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid #e2e8f0;">
+                        <h6 class="mb-0 fw-bold">Notifications</h6>
+                        <span class="badge bg-primary" id="notificationBadgeCount">0</span>
+                    </li>
+                    <li>
+                        <div id="notificationList" class="p-2">
+                            <div class="text-center text-muted py-3">
+                                <i class="fa fa-spinner fa-spin me-2"></i>Loading...
+                            </div>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="text-center px-3 py-2">
+                        <a href="/Dashboard/Index" class="text-sm text-primary text-decoration-none navbar-nav-link">View All Activity</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Messages -->
+            <div class="nav-icon dropdown" style="position:relative;" title="Lead Follow-ups">
+                <i class="fa-solid fa-envelope" data-bs-toggle="dropdown" aria-expanded="false"></i>
+                <span class="notification-badge" id="messageCount" style="display:none;">0</span>
+
+                <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-panel">
+                    <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid #e2e8f0;">
+                        <h6 class="mb-0 fw-bold">Follow-ups</h6>
+                        <span class="badge bg-warning text-dark" id="messageBadgeCount">Due</span>
+                    </li>
+                    <li>
+                        <div id="messageList" class="p-2">
+                            <div class="text-center text-muted py-3">
+                                <i class="fa fa-spinner fa-spin me-2"></i>Loading...
+                            </div>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="text-center px-3 py-2">
+                        <a href="/Leads/Index" class="text-sm text-primary text-decoration-none navbar-nav-link">Open Leads</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Settings -->
+            <a asp-controller="Profile" asp-action="Settings" class="nav-icon" title="Settings" data-full-nav="true" style="color: inherit; text-decoration: none;">
+                <i class="fa-solid fa-gear"></i>
+            </a>
+
+            <!-- User Dropdown -->
+            <div class="user-dropdown dropdown">
+                <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-avatar" id="userAvatar">
+                        @(string.IsNullOrEmpty(Context.Session.GetString("FullName")) ? "U" : Context.Session.GetString("FullName")!.Substring(0,1).ToUpper())
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">@Context.Session.GetString("FullName")</span>
+                        <span class="user-role">@Context.Session.GetString("RoleName")</span>
+                    </div>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                        <a asp-controller="Profile"
+                           asp-action="Index"
+                           class="dropdown-item"
+                           data-full-nav="true">
+                            <i class="fa fa-user me-2"></i>
+                            My Profile
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="/Profile/ChangePassword"
+                           data-full-nav="true">
+                            <i class="fa fa-key me-2"></i>
+                            Change Password
+                        </a>
+                    </li>
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li>
+                        <a class="dropdown-item text-danger"
+                           href="/Account/Logout">
+                            <i class="fa fa-sign-out-alt me-2"></i>
+                            Logout
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= SIDEBAR (FULL SAME CONTENT) ================= -->
+    <div id="sidebar" class="sidebar">
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Dashboard"))
+        {
+            <a href="/Dashboard/Index">
+                <i class="fa-solid fa-house"></i>
+                <span class="text">Dashboard</span>
+            </a>
+        }
+        
+
+        <div class="menu-section">
+            <i class="fa-solid fa-database"></i>
+            <span class="section-label">Setup</span>
+        </div>
+
+        <!-- MASTERS -->
+        <a href="javascript:void(0)" class="nav-parent" onclick="toggleMenu('masters',this)">
+            <i class="fa-solid fa-layer-group"></i>
+            <span class="text">Masters</span>
+            <i class="fa-solid fa-chevron-down arrow"></i>
+        </a>
+
+        <div id="masters" class="submenu">
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "MembershipPlans"))
+            {
+                <a href="/MembershipPlans/Index">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span class="text">Membership Plans</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "MemberMaster"))
+            {
+                <a asp-controller="MemberMasters"
+                   asp-action="Index">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="text">Member Master</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "StaffMaster"))
+            {
+                <a href="/StaffMasters/Index">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span class="text">Staff Master</span>
+                </a>
+            }
+               
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "ExerciseMaster"))
+            {
+                <a href="/Exercise/Index">
+                    <i class="fa-solid fa-dumbbell"></i>
+                    <span class="text">Exercise Master</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "DietMaster"))
+            {
+                <a href="/DietMaster/Index">
+                    <i class="fa-solid fa-apple-whole"></i>
+                    <span class="text">Diet Master</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "Classes"))
+            {
+                <a href="/ClassMaster/Index">
+                    <i class="fas fa-users"></i>
+                    <span class="text">Class Master</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "Equipment"))
+            {
+                <a href="/EquipmentMaster/Index">
+                    <i class="fas fa-dumbbell"></i>
+                    <span class="text">Equipment Master</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "Products"))
+            {
+                <a href="/Products/Index">
+                    <i class="fa-solid fa-box"></i>
+                    <span class="text">Products</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "Vendors"))
+            {
+                <a href="/Vendors/Index">
+                    <i class="fa-solid fa-store"></i>
+                    <span class="text">Vendors</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "ExpenseHeads"))
+            {
+                 <a href="/ExpenseHeads/Index">
+                     <i class="fa-solid fa-money-bill"></i>
+                     <span class="text">Expense Heads</span>
+                 </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "PaymentGateway"))
+            {
+                <a asp-controller="PaymentGateway" asp-action="Index">
+                    <i class="fa-solid fa-building-columns"></i>
+                    <span class="text">Payment Gateway</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "WhatsAppApiSetup"))
+            {
+                <a asp-controller="WhatsAppApiSetup" asp-action="Index">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <span class="text">WhatsApp API Setup</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "LeadSources"))
+            {
+                <a href="/LeadSources/Index"><i class="fa-solid fa-chart-simple"></i><span class="text">Lead Sources</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "UsersRoles"))
+            {
+                <a href="/UsersRoles/Index">
+                    <i class="fa-solid fa-lock"></i>
+                    <span class="text">Users & Roles</span>
+                </a>
+            }
+        </div>
+
+        <div class="menu-section">
+            <i class="fa-solid fa-bolt"></i>
+            <span class="section-label">Operations</span>
+        </div>
+
+        <!-- ENTRIES -->
+        <a href="javascript:void(0)" class="nav-parent" onclick="toggleMenu('entries',this)">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span class="text">Entries</span>
+            <i class="fa-solid fa-chevron-down arrow"></i>
+        </a>
+
+        <div id="entries" class="submenu">
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "MembershipManagement"))
+            {
+                <a asp-controller="MembershipManagement" asp-action="Index">
+                    <i class="fa-solid fa-file"></i>
+                    <span class="text">Membership Management</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Attendance"))
+            {
+                <a href="/Attendance/Index">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="text">Member Attendance</span>
+                </a>
+                <a href="/Attendance/History">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span class="text">Member History</span>
+                </a>
+            }
+
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Payments"))
+            {
+                <a href="/Payments/Index"><i class="fa-solid fa-credit-card"></i><span class="text">Payments</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Leads"))
+            {
+                <a href="/Leads/Index"><i class="fa-solid fa-bullseye"></i><span class="text">Leads</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Leads"))
+            {
+                <a href="/WhatsAppBot/Index">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <span class="text">WhatsApp Bot</span>
+                </a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "TrainerAssignment"))
+            {
+                <a href="/TrainerAssignments/Index">
+
+                    <i class="fa-solid fa-person-running"></i>
+
+                    <span class="text">
+
+                        Trainer Assignment
+
+                    </span>
+
+                </a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "WorkoutPlans"))
+            {
+                <a href="/WorkoutPlans/Index"><i class="fa-solid fa-clipboard-list"></i><span class="text">Workout Plans</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "DietPlans"))
+            {
+                <a href="/DietPlans/Index"><i class="fa-solid fa-carrot"></i><span class="text">Diet Plans</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "PTSessions"))
+            {
+                <a href="/PTSessions/Index"><i class="fa-solid fa-clock"></i><span class="text">PT Sessions</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(
+                        Context,
+                        PermissionRepo,
+                        "ClassBookings"))
+            {
+                <a href="/ClassBooking/Index"><i class="fa-solid fa-ticket"></i><span class="text">Class Booking</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "StockPurchase"))
+            {
+                <a href="/StockPurchase/Index"><i class="fa-solid fa-boxes-stacked"></i><span class="text">Stock Purchase</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "StockIssue"))
+            {
+                <a href="/StockIssue/Index"><i class="fa-solid fa-truck"></i><span class="text">Stock Issue</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "EquipmentMaintenance"))
+            {
+                <a href="/EquipmentMaintenance/Index"><i class="fa-solid fa-screwdriver-wrench"></i><span class="text">Equipment Maintenance</span></a>
+            }
+            @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Expenses"))
+            {
+                <a href="/Expenses/Index"><i class="fa-solid fa-sack-dollar"></i><span class="text">Expenses</span></a>
+            }
+        </div>
+
+        @if (GymManagement.Helpers.PermissionHelper.CanAccessPayroll(Context, PermissionRepo))
+        {
+            <div class="menu-section">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                <span class="section-label">Payroll</span>
+            </div>
+
+            <a href="javascript:void(0)" class="nav-parent" onclick="toggleMenu('payroll',this)">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span class="text">Payroll</span>
+                <i class="fa-solid fa-chevron-down arrow"></i>
+            </a>
+
+            <div id="payroll" class="submenu">
+                @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "Payroll")
+                    || GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryProcessing"))
+                {
+                    <a asp-controller="Payroll" asp-action="Index">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <span class="text">Payroll Dashboard</span>
+                    </a>
+                }
+                @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryProcessing"))
+                {
+                    <a href="/SalaryProcessing/Index">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span class="text">Salary Processing</span>
+                    </a>
+                    <a asp-controller="SalaryProcessing" asp-action="Statement">
+                        <i class="fa-solid fa-table"></i>
+                        <span class="text">Salary Statement</span>
+                    </a>
+                    <a asp-controller="SalaryProcessing" asp-action="BankStatement">
+                        <i class="fa-solid fa-university"></i>
+                        <span class="text">Bank Statement</span>
+                    </a>
+                }
+                @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "StaffAttendance"))
+                {
+                    <a href="/StaffAttendance/Index">
+                        <i class="fa-solid fa-user-clock"></i>
+                        <span class="text">Staff Attendance</span>
+                    </a>
+                    <a href="/StaffAttendance/History">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span class="text">Staff History</span>
+                    </a>
+                }
+                @if (GymManagement.Helpers.PermissionHelper.CanView(Context, PermissionRepo, "SalaryRuleMaster"))
+                {
+                    <a asp-controller="SalaryRuleMaster" asp-action="Index">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span class="text">Salary Rules</span>
+                    </a>
+                }
+            </div>
+        }
+
+        <div class="menu-section">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span class="section-label">Reports</span>
+        </div>
+
+        <!-- REPORTS -->
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "Members"))
+        {
+            <a asp-controller="Members"
+               asp-action="Index">
+
+                <i class="fa fa-users"></i>
+
+                <span class="text">
+
+                    Members
+
+                </span>
+
+            </a>
+        }
+        
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "ReportAttendance"))
+        {
+            <a href="/Reports/Attendance">
+                <i class="fa-solid fa-calendar"></i>
+                <span class="text">Attendance</span>
+            </a>
+        }
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "ReportExpiry"))
+        {
+            <a href="/Reports/MembershipExpiry">
+                <i class="fa-solid fa-hourglass-end"></i>
+                <span class="text">Expiry</span>
+            </a>
+        }
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "ReportCollections"))
+        {
+            <a href="/Reports/Collections">
+                <i class="fa-solid fa-coins"></i>
+                <span class="text">Collections</span>
+            </a>
+        }
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "ReportOutstanding"))
+        {
+            <a href="/Reports/Outstanding">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span class="text">Outstanding</span>
+            </a>
+        }
+
+        @if (GymManagement.Helpers.PermissionHelper.CanView(
+                Context,
+                PermissionRepo,
+                "ReportProfitLoss"))
+        {
+            <a href="/Reports/ProfitLoss">
+                <i class="fa-solid fa-chart-line"></i>
+                <span class="text">Profit/Loss</span>
+            </a>
+        }
+
+        <div class="sidebar-footer-space"></div>
+
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content" class="content">
+        @RenderBody()
+    </div>
+
+    @if (Context.Session.GetInt32("RoleId") != null)
+    {
+        <div id="cm-toast-container" aria-live="polite" aria-label="Notifications"></div>
+    }
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @RenderSection("Scripts", required: false)
+
+    @if (Context.Session.GetInt32("RoleId") != null)
+    {
+        <partial name="_AiAgent" />
+    }
+</body>
+</html>

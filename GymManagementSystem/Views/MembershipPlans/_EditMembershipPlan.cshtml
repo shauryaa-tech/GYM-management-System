@@ -1,0 +1,53 @@
+﻿@model GymManagement.Models.MembershipPlanMaster
+
+<form method="post" asp-action="Update">
+
+    <input type="hidden" asp-for="PlanId" />
+
+    <div class="row">
+
+        <div class="col-md-6 mb-3">
+            <label>Plan Name</label>
+            <input asp-for="PlanName" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Duration Months</label>
+            <input asp-for="DurationMonths" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Amount</label>
+            <input asp-for="Amount" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Joining Fee</label>
+            <input asp-for="JoiningFee" class="form-control" />
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <label>Description</label>
+            <input asp-for="Description" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label>Status</label>
+
+            <select asp-for="IsActive"
+                    class="form-select">
+
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+
+            </select>
+        </div>
+
+    </div>
+
+    <button type="submit"
+            class="btn btn-success">
+        Update Plan
+    </button>
+
+</form>

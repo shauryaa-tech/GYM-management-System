@@ -1,0 +1,66 @@
+@model GymManagement.Models.StaffAttendance
+
+<form method="post" asp-action="Update">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="AttendanceId" value="@Model.AttendanceId" />
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label>Staff</label>
+            <select name="StaffId" class="form-select" required>
+                <option value="">Select Staff</option>
+                @foreach (var staff in ViewBag.Staff)
+                {
+                    if (staff.StaffId == Model.StaffId)
+                    {
+                        <option value="@staff.StaffId" selected>@staff.StaffName - @staff.Designation</option>
+                    }
+                    else
+                    {
+                        <option value="@staff.StaffId">@staff.StaffName - @staff.Designation</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Date</label>
+            <input type="date" name="AttendanceDate" class="form-control" value="@Model.AttendanceDate.ToString("yyyy-MM-dd")" required />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Check In</label>
+            <input type="time" name="CheckInTime" class="form-control" value="@Model.CheckInTime?.ToString(@"hh\:mm")" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Check Out</label>
+            <input type="time" name="CheckOutTime" class="form-control" value="@Model.CheckOutTime?.ToString(@"hh\:mm")" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label>Status</label>
+            <select name="Status" class="form-select" required>
+                @{
+                    var statuses = new[] { "Present", "Absent", "Leave", "HalfDay" };
+                    foreach (var st in statuses)
+                    {
+                        if (Model.Status == st)
+                        {
+                            <option value="@st" selected>@st</option>
+                        }
+                        else
+                        {
+                            <option value="@st">@st</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-12 mb-3">
+            <label>Remarks</label>
+            <textarea name="Remarks" class="form-control" rows="2">@Model.Remarks</textarea>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save me-2"></i>Update Attendance
+        </button>
+    </div>
+</form>

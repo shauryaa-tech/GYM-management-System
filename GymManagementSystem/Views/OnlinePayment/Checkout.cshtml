@@ -1,0 +1,281 @@
+@{
+
+    ViewData["Title"] = "Online Payment Checkout";
+
+    var gateway = ViewBag.Gateway as string ?? "Paytm";
+
+    var isProduction = string.Equals(ViewBag.Environment as string, "Production", StringComparison.OrdinalIgnoreCase);
+
+    var paytmHost = isProduction ? "https://securegw.paytm.in" : "https://securegw-stage.paytm.in";
+
+    var cashfreeMode = isProduction ? "production" : "sandbox";
+
+}
+
+
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-7">
+
+            <div class="card shadow border-0">
+
+                <div class="card-header bg-primary text-white">
+
+                    <h5 class="mb-0"><i class="fa-solid fa-building-columns me-2"></i>Complete Payment via @gateway</h5>
+
+                </div>
+
+                <div class="card-body text-center py-5" id="checkoutStatus">
+
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+
+                    <p class="mb-1">Order: <strong>@ViewBag.OrderId</strong></p>
+
+                    <p class="mb-2 text-muted">Amount: <strong>₹@ViewBag.Amount</strong></p>
+
+                    <p class="small text-muted mb-0">Payment window open nahi hui to niche button try karein.</p>
+
+                    <button type="button" class="btn btn-primary mt-3 d-none" id="retryCheckoutBtn">Open Payment</button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+@if (gateway == "Paytm")
+
+{
+
+    <script src="@paytmHost/merchantpgpui/checkoutjs/merchants/@(ViewBag.MerchantId).js" crossorigin="anonymous"></script>
+
+    <script>
+
+        (function () {
+
+            var orderId = '@ViewBag.OrderId';
+
+            var txnToken = '@ViewBag.TxnToken';
+
+            var amount = '@ViewBag.Amount';
+
+            var mid = '@ViewBag.MerchantId';
+
+
+
+            function showError(msg) {
+
+                var box = document.getElementById('checkoutStatus');
+
+                if (!box) return;
+
+                box.innerHTML = '<div class="alert alert-danger mb-0">' + msg + '</div>';
+
+            }
+
+
+
+            function launchPaytm() {
+
+                if (!txnToken) {
+
+                    showError('Payment token missing. Gateway settings check karein.');
+
+                    return;
+
+                }
+
+                if (!mid) {
+
+                    showError('Paytm Merchant ID missing. Masters → Payment Gateway me MID set karein.');
+
+                    return;
+
+                }
+
+                if (!window.Paytm || !window.Paytm.CheckoutJS) {
+
+                    showError('Paytm checkout script load nahi hui. Internet check karein.');
+
+                    return;
+
+                }
+
+
+
+                var config = {
+
+                    root: '',
+
+                    flow: 'DEFAULT',
+
+                    merchant: { mid: mid, redirect: false },
+
+                    data: {
+
+                        orderId: orderId,
+
+                        token: txnToken,
+
+                        tokenType: 'TXN_TOKEN',
+
+                        amount: amount
+
+                    },
+
+                    handler: {
+
+                        notifyMerchant: function (eventName) {
+
+                            if (eventName === 'APP_CLOSED') {
+
+                                window.location.href = '/SalaryProcessing/Index';
+
+                            }
+
+                        }
+
+                    }
+
+                };
+
+
+
+                window.Paytm.CheckoutJS.init(config).then(function () {
+
+                    return window.Paytm.CheckoutJS.invoke();
+
+                }).catch(function (err) {
+
+                    console.error(err);
+
+                    showError('Paytm checkout start nahi ho paya. Gateway credentials verify karein.');
+
+                    document.getElementById('retryCheckoutBtn')?.classList.remove('d-none');
+
+                });
+
+            }
+
+
+
+            document.getElementById('retryCheckoutBtn')?.addEventListener('click', launchPaytm);
+
+
+
+            if (document.readyState === 'complete') {
+
+                setTimeout(launchPaytm, 300);
+
+            } else {
+
+                window.addEventListener('load', function () { setTimeout(launchPaytm, 300); });
+
+            }
+
+        })();
+
+    </script>
+
+}
+
+else if (gateway == "PhonePe" && !string.IsNullOrWhiteSpace(ViewBag.RedirectUrl as string))
+
+{
+
+    <script>
+
+        window.location.href = '@ViewBag.RedirectUrl';
+
+    </script>
+
+}
+
+else if (gateway == "Razorpay")
+
+{
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+
+        var options = {
+
+            key: '@ViewBag.RazorPayKeyId',
+
+            amount: Math.round(parseFloat('@ViewBag.Amount') || 0) * 100,
+
+            currency: 'INR',
+
+            name: 'CloudMex Gym',
+
+            description: 'Salary / Gym Payment',
+
+            order_id: '@ViewBag.RazorPayOrderId',
+
+            callback_url: window.location.origin + '/OnlinePayment/RazorpayCallback',
+
+            theme: { color: '#2563eb' }
+
+        };
+
+        var rzp = new Razorpay(options);
+
+        rzp.on('payment.failed', function () {
+
+            window.location.href = '/SalaryProcessing/Index';
+
+        });
+
+        rzp.open();
+
+    </script>
+
+}
+
+else if (gateway == "Cashfree" && !string.IsNullOrWhiteSpace(ViewBag.CashfreeSessionId as string))
+
+{
+
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+    <script>
+
+        const cashfree = Cashfree({ mode: '@cashfreeMode' });
+
+        cashfree.checkout({
+
+            paymentSessionId: '@ViewBag.CashfreeSessionId',
+
+            redirectTarget: '_self'
+
+        });
+
+    </script>
+
+}
+
+else
+
+{
+
+    <script>
+
+        document.getElementById('checkoutStatus').innerHTML =
+
+            '<div class="alert alert-warning mb-0">Gateway "@gateway" ke liye checkout configure nahi hai.</div>';
+
+    </script>
+
+}
+
+

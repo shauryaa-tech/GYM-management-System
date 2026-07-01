@@ -1,0 +1,66 @@
+@model GymManagement.ViewModels.ExportImportToolbarViewModel
+
+@if (Model.CanExport || Model.CanImport)
+{
+    <div class="d-flex flex-wrap gap-2 align-items-center export-import-toolbar">
+        @if (Model.CanExport)
+        {
+            <a href="/@Model.Controller/@Model.ExportAction@Model.QueryString"
+               class="btn btn-outline-success btn-sm"
+               data-full-nav="true"
+               title="@(Model.ExportAsExcel ? "Export to Excel" : "Export to CSV")">
+                <i class="fa-solid @(Model.ExportAsExcel ? "fa-file-excel" : "fa-file-export") me-1"></i>@(Model.ExportAsExcel ? "Export Excel" : "Export")
+            </a>
+        }
+
+        @if (Model.CanImport)
+        {
+            <form asp-controller="@Model.Controller"
+                  asp-action="@Model.ImportAction"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="d-flex flex-wrap gap-2 align-items-center import-form"
+                  data-full-nav="true">
+                @Html.AntiForgeryToken()
+                @foreach (var kv in Model.RouteValues)
+                {
+                    <input type="hidden" name="@kv.Key" value="@kv.Value" />
+                }
+                <label class="btn btn-outline-primary btn-sm mb-0 import-file-label">
+                    <i class="fa-solid fa-file-import me-1"></i>Import CSV
+                    <input type="file" name="file" accept=".csv,text/csv" class="d-none import-file-input" required />
+                </label>
+            </form>
+        }
+    </div>
+}
+
+<style>
+    .export-import-toolbar .import-file-label {
+        cursor: pointer;
+    }
+    .export-import-toolbar .import-file-label.has-file {
+        border-color: var(--cm-primary, #2563eb);
+        color: var(--cm-primary, #2563eb);
+    }
+</style>
+
+<script>
+    (function () {
+        document.querySelectorAll('.import-file-input').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var label = this.closest('.import-file-label');
+                var form = this.closest('form');
+                if (!label || !form) return;
+                if (this.files && this.files.length > 0) {
+                    label.classList.add('has-file');
+                    var name = this.files[0].name;
+                    label.childNodes.forEach(function (n) {
+                        if (n.nodeType === 3 && n.textContent.trim()) n.textContent = ' ' + name + ' ';
+                    });
+                    form.submit();
+                }
+            });
+        });
+    })();
+</script>

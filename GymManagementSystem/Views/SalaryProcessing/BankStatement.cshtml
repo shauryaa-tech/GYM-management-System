@@ -1,0 +1,162 @@
+@model GymManagement.ViewModels.BankStatementReportViewModel
+@{
+    ViewData["Title"] = "Bank Statement";
+    var importRoute = new Dictionary<string, string>
+    {
+        ["month"] = Model.Month.ToString(),
+        ["year"] = Model.Year.ToString()
+    };
+}
+
+<link rel="stylesheet" href="~/css/salary-statement.css" asp-append-version="true" />
+
+<div class="salary-stmt-toolbar no-print">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Bank Statement</h2>
+            <p class="text-muted mb-0">Staff bank details + imported salary — @Model.MonthLabel</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+            <a asp-action="Statement" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="btn btn-outline-primary">Salary Statement</a>
+            @await Component.InvokeAsync("ExportImport", new {
+                module = "BankStatement",
+                allowImport = true,
+                exportAction = "ExportBankStatement",
+                importAction = "ImportBankStatement",
+                redirectAction = "BankStatement",
+                exportAsExcel = true,
+                routeValues = importRoute
+            })
+            <a asp-action="ExportBankStatementCsv" asp-route-month="@Model.Month" asp-route-year="@Model.Year" class="btn btn-outline-success btn-sm" data-full-nav="true">
+                <i class="fa-solid fa-file-csv me-1"></i> CSV Template
+            </a>
+            <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-print me-1"></i> Print</button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-3 mb-0">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3 mb-0">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+
+    <form method="get" asp-action="BankStatement" class="row g-2 align-items-end mt-3">
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Month</label>
+            <select name="month" class="form-select form-select-sm">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m" selected="@(m == Model.Month)">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Year</label>
+            <input type="number" name="year" class="form-control form-control-sm" value="@Model.Year" min="2020" max="2099" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Payment Date</label>
+            <input type="date" name="paymentDate" class="form-control form-control-sm" value="@Model.PaymentDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Department</label>
+            <select name="department" class="form-select form-select-sm">
+                <option value="">All</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d" selected="@(Model.DepartmentFilter == d)">@d</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-0">Search</label>
+            <input type="text" name="search" class="form-control form-control-sm" value="@Model.Search" placeholder="Name / Code / A/c" />
+        </div>
+        <div class="col-md-2">
+            <div class="form-check mb-1">
+                <input class="form-check-input" type="checkbox" name="onlyWithBank" value="true" id="onlyWithBank" @(Model.OnlyWithBank ? "checked" : "") />
+                <label class="form-check-label small" for="onlyWithBank">Bank details only</label>
+            </div>
+            <button class="btn btn-sm btn-primary w-100">Generate</button>
+        </div>
+    </form>
+</div>
+
+<div class="salary-stmt-sheet">
+    <div class="salary-stmt-header text-center">
+        @if (!string.IsNullOrWhiteSpace(Model.CompanyName))
+        {
+            <h3 class="salary-stmt-company mb-1">@Model.CompanyName</h3>
+        }
+        <h4 class="salary-stmt-title mb-0">BANK Statement — @Model.MonthLabel</h4>
+        <p class="salary-stmt-meta mb-0">Payment Date: @Model.PaymentDate.ToString("dd-MM-yyyy")</p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="salary-stmt-table">
+            <thead>
+                <tr class="salary-stmt-col-row">
+                    <th>Empcode</th>
+                    <th>EmployeeName</th>
+                    <th>Company_Name</th>
+                    <th>BankName</th>
+                    <th>Bank AC NO</th>
+                    <th>IFSCCode</th>
+                    <th class="salary-stmt-highlight">AMOUNT</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Rows.Any())
+                {
+                    @foreach (var r in Model.Rows)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@r.EmpCode</td>
+                            <td>@r.EmployeeName</td>
+                            <td>@r.CompanyName</td>
+                            <td>@(r.BankName ?? "—")</td>
+                            <td>@(r.BankAccountNo ?? "—")</td>
+                            <td>@(r.IfscCode ?? "—")</td>
+                            <td class="text-end salary-stmt-highlight-cell fw-bold">@r.Amount.ToString("N0")</td>
+                            <td class="text-center">
+                                @if (r.IsPaid)
+                                {
+                                    <span class="badge bg-success">Paid</span>
+                                }
+                                else if (r.IsProcessed)
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No bank transfer records for selected filters.</td>
+                    </tr>
+                }
+            </tbody>
+            @if (Model.Rows.Any())
+            {
+                <tfoot>
+                    <tr class="salary-stmt-total-row">
+                        <td colspan="7" class="text-end fw-bold">Total (@Model.Rows.Count employees)</td>
+                        <td class="text-end fw-bold">@Model.TotalAmount.ToString("N0")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</div>

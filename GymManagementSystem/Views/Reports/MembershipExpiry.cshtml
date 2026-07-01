@@ -1,0 +1,113 @@
+@model GymManagement.ViewModels.ExpiryReportViewModel
+
+@{
+    ViewData["Title"] = "Membership Expiry Report";
+}
+
+<partial name="_ReportStyles" />
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Membership Expiry Report</h2>
+            <p class="mb-0">Active members whose plans expire within @Model.DaysAhead days</p>
+        </div>
+        @await Component.InvokeAsync("ExportImport", new { module = "ReportExpiry", exportAction = "ExportExpiry" })
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card bg-danger text-white">
+            <div class="card-body">
+                <h6>Already Expired</h6>
+                <h2>@Model.ExpiredCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <h6>Expiring Soon</h6>
+                <h2>@Model.ExpiringSoonCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <h6>Total Listed</h6>
+                <h2>@Model.Rows.Count</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Days Ahead</label>
+                <select name="daysAhead" class="form-select">
+                    <!option value="7" @(Model.DaysAhead == 7 ? "selected" : null)>Next 7 days</!option>
+                    <!option value="15" @(Model.DaysAhead == 15 ? "selected" : null)>Next 15 days</!option>
+                    <!option value="30" @(Model.DaysAhead == 30 ? "selected" : null)>Next 30 days</!option>
+                    <!option value="60" @(Model.DaysAhead == 60 ? "selected" : null)>Next 60 days</!option>
+                    <!option value="90" @(Model.DaysAhead == 90 ? "selected" : null)>Next 90 days</!option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Member Code</th>
+                        <th>Member Name</th>
+                        <th>Mobile</th>
+                        <th>Plan</th>
+                        <th>End Date</th>
+                        <th>Days Left</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No expiring memberships found.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var row in Model.Rows)
+                    {
+                        var badgeClass = row.DaysLeft < 0 ? "bg-danger" : row.DaysLeft <= 7 ? "bg-warning text-dark" : "bg-success";
+                        <tr>
+                            <td>@row.MemberCode</td>
+                            <td>@row.MemberName</td>
+                            <td>@row.MobileNo</td>
+                            <td>@row.PlanName</td>
+                            <td>@row.PlanEndDate.ToString("dd-MMM-yyyy")</td>
+                            <td>
+                                <span class="badge @badgeClass">
+                                    @(row.DaysLeft < 0 ? $"{Math.Abs(row.DaysLeft)} days ago" : $"{row.DaysLeft} days")
+                                </span>
+                            </td>
+                            <td>@row.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,134 @@
+/* Salary Statement — Excel-style sheet */
+
+.salary-stmt-toolbar {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.salary-stmt-sheet {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px 16px 24px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+}
+
+.salary-stmt-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #0d9488;
+}
+
+.salary-stmt-company {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.salary-stmt-address {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.salary-stmt-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0d9488;
+}
+
+.salary-stmt-meta {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.salary-stmt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.salary-stmt-table th,
+.salary-stmt-table td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+.salary-stmt-group-row th {
+    background: #0f766e;
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
+    padding: 8px 6px;
+}
+
+.salary-stmt-col-row th {
+    background: #14b8a6;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.68rem;
+}
+
+.salary-stmt-col-row th.salary-stmt-highlight,
+.salary-stmt-highlight-cell {
+    background: #ccfbf1 !important;
+    color: #0f172a !important;
+}
+
+.salary-stmt-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.salary-stmt-table tbody tr:hover {
+    background: #f0fdfa;
+}
+
+.salary-stmt-name {
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.salary-stmt-total-row td {
+    background: #ecfeff;
+    border-top: 2px solid #0d9488;
+    font-size: 0.78rem;
+}
+
+@media print {
+    .no-print,
+    .sidebar,
+    .navbar,
+    .ai-agent-launcher,
+    .ai-agent-panel {
+        display: none !important;
+    }
+
+    .main-content,
+    .content-wrapper,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .salary-stmt-sheet {
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .salary-stmt-table {
+        font-size: 9px;
+    }
+
+    .salary-stmt-table th,
+    .salary-stmt-table td {
+        padding: 3px 4px;
+    }
+}
